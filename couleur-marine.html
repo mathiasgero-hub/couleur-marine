@@ -732,31 +732,6 @@ body{padding-bottom:env(safe-area-inset-bottom);}
       </div>
     </div>
     <div class="settings-section">
-      <h3>💾 Sauvegarde &amp; Export</h3>
-      <div class="setting-row">
-        <div class="setting-info">
-          <div class="setting-label">Exporter toutes les cartes</div>
-          <div class="setting-desc">Génère un fichier JSON à partager ou sauvegarder</div>
-        </div>
-        <button class="btn btn-primary btn-sm" onclick="DataIO.showExportModal()">📤 Exporter</button>
-      </div>
-      <div class="setting-row">
-        <div class="setting-info">
-          <div class="setting-label">Importer des cartes (JSON)</div>
-          <div class="setting-desc">Restaurer depuis un export précédent</div>
-        </div>
-        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('input-import-json').click()">📥 Importer</button>
-      </div>
-      <div id="import-progress-wrap" style="display:none;margin-top:4px;margin-bottom:8px;padding:14px 16px;background:var(--bg);border-radius:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <span id="import-progress-text" style="font-weight:700;font-size:0.88rem;color:var(--navy);">Import en cours…</span>
-          <span id="import-progress-pct" style="font-size:0.82rem;color:var(--gray-mid);">0%</span>
-        </div>
-        <div style="background:var(--gray-light);border-radius:6px;height:8px;overflow:hidden;">
-          <div id="import-progress-bar" style="height:100%;background:var(--teal);width:0%;transition:width 0.2s;border-radius:6px;"></div>
-        </div>
-        <div id="import-progress-sub" style="font-size:0.78rem;color:var(--gray-mid);margin-top:6px;">Préparation…</div>
-      </div>
       <h3>🗑️ Données</h3>
       <div class="setting-row">
         <div class="setting-info"><div class="setting-label">Réinitialiser les scores</div></div>
@@ -860,31 +835,6 @@ body{padding-bottom:env(safe-area-inset-bottom);}
   </div>
 </div>
 
-<!-- ═══ MODAL : Export ═══ -->
-<div id="modal-export" class="modal-overlay">
-  <div class="modal">
-    <div class="modal-title">📤 Exporter les données</div>
-    <div id="export-choice">
-      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
-        <button class="btn btn-primary btn-lg" onclick="DataIO.exportLight()">
-          ⚡ Export léger <span style="font-size:0.8rem;font-weight:600;opacity:0.85;display:block;margin-top:2px;">Catégories + mots + sons · Rapide (quelques secondes)<br>⚠️ Images non incluses — à ré-importer depuis tes dossiers</span>
-        </button>
-        <button class="btn btn-secondary btn-lg" onclick="DataIO.exportFull()">
-          🗂️ Export complet <span style="font-size:0.8rem;font-weight:600;opacity:0.75;display:block;margin-top:2px;">Tout inclus (images + sons) · Peut prendre plusieurs minutes<br>Nécessite beaucoup de mémoire RAM</span>
-        </button>
-      </div>
-      <button class="btn btn-secondary btn-block" onclick="DataIO.closeExportModal()">Annuler</button>
-    </div>
-    <div id="export-progress" style="display:none;text-align:center;">
-      <div style="font-size:2rem;margin-bottom:10px;">⏳</div>
-      <div id="export-progress-text" style="font-weight:700;margin-bottom:14px;">Préparation…</div>
-      <div style="background:var(--gray-light);border-radius:6px;overflow:hidden;height:12px;margin-bottom:12px;">
-        <div id="export-progress-bar" style="height:100%;background:var(--teal);width:0%;transition:width 0.3s;border-radius:6px;"></div>
-      </div>
-      <div id="export-progress-sub" style="font-size:0.82rem;color:var(--gray-mid);">Ne ferme pas cette fenêtre…</div>
-    </div>
-  </div>
-</div>
 
 <!-- ═══ MODAL : Import ═══ -->
 <div id="modal-import" class="modal-overlay">
@@ -900,7 +850,6 @@ body{padding-bottom:env(safe-area-inset-bottom);}
 
 <!-- INPUTS -->
 <input type="file" id="input-image" accept="image/*" style="display:none" onchange="Editor.imageSelected(this)">
-<input type="file" id="input-import-json" accept=".json" style="display:none" onchange="DataIO.importAll(this)">
 <input type="file" id="input-audio" accept="audio/*" style="display:none" onchange="Editor.audioFileSelected(this)">
 <input type="file" id="input-folder" webkitdirectory multiple style="display:none" onchange="Importer.folderSelected(this)">
 <input type="file" id="input-add-images" accept="image/*" multiple style="display:none" onchange="Importer.imagesSelected(this)">
@@ -1891,10 +1840,8 @@ function updateHomeScore(){
   document.getElementById('lib-score').textContent=total;
 }
 
-// ══════════════════════════════════════════════════
-//  DATA EXPORT / IMPORT
-// ══════════════════════════════════════════════════
-const DataIO = (() => {
+// DataIO supprimé — export/import JSON retiré de l'application
+if (false) { const DataIO = (() => {
   function showExportModal() {
     document.getElementById('export-choice').style.display = '';
     document.getElementById('export-progress').style.display = 'none';
@@ -2180,7 +2127,7 @@ const DataIO = (() => {
   }
 
   return {showExportModal, closeExportModal, exportLight, exportFull, importAll, importFirstRun};
-})();
+}); }
 
 // ══════════════════════════════════════════════════
 //  INIT
