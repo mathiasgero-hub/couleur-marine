@@ -2036,30 +2036,68 @@ const DataIO = (() => {
     if (wrap) wrap.style.display = 'none';
   }
 
+  async function _readFileAsJSON(file, onProgress) {
+    // Essaie d'abord Response.json() (natif, efficace en mémoire)
+    // Si ça échoue (vieux Safari / OOM), bascule sur FileReader
+    try {
+      if (typeof Response !== 'undefined') {
+        onProgress && onProgress('Décodage JSON…', 6);
+        return await new Response(file).json();
+      }
+    } catch(e1) { /* fallback */ }
+    // Fallback : FileReader classique
+    onProgress && onProgress('Lecture du fichier…', 4);
+    const text = await new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result);
+      fr.onerror = () => rej(fr.error);
+      fr.readAsText(file, 'utf-8');
+    });
+    onProgress && onProgress('Décodage JSON…', 10);
+    await new Promise(r => setTimeout(r, 0)); // yield avant parse bloquant
+    return JSON.parse(text);
+  }
+
   async function importAll(input) {
     const file = input.files[0]; if (!file) return;
     try {
       const sizeMb = Math.round(file.size / 1024 / 1024);
-      _showImportProgress('Lecture du fichier…', 2, `${file.name} · ${sizeMb} Mo`);
+      const isLargeOnMobile = sizeMb > 80 &&
+        /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+      // Avertissement si gros fichier sur mobile
+      if (isLargeOnMobile) {
+        const proceed = await Confirm.ask(
+          `Fichier volumineux (${sizeMb} Mo)`,
+          'Sur téléphone, un fichier avec images peut saturer la mémoire et planter. Préfère l\'export léger (sans images) pour les appareils mobiles. Continuer quand même ?',
+          'Continuer'
+        );
+        if (!proceed) { input.value=''; return; }
+      }
+
+      _showImportProgress('Lecture du fichier…', 2, `${sizeMb} Mo — patiente…`);
       await new Promise(r => setTimeout(r, 80));
 
-      // Response.json() uses the browser's native streaming parser
-      // — avoids créer une chaîne intermédiaire de 500 Mo en RAM
       let payload;
       try {
-        payload = await new Response(file).json();
+        payload = await _readFileAsJSON(file, (msg, pct) => {
+          _showImportProgress(msg, pct, `${sizeMb} Mo`);
+        });
       } catch(parseErr) {
         _hideImportProgress();
-        toast('❌ Fichier JSON invalide ou corrompu'); return;
+        toast('❌ Impossible de lire ce fichier : ' + (parseErr.message || parseErr));
+        console.error('Import parse error:', parseErr);
+        return;
       }
 
-      if (!payload.categories || !payload.cards) {
-        _hideImportProgress(); toast('❌ Format de fichier non reconnu'); return;
+      if (!payload || !payload.categories || !payload.cards) {
+        _hideImportProgress();
+        toast('❌ Format non reconnu (categories ou cards manquants)'); return;
       }
 
-      _showImportProgress('Données lues…', 12,
+      _showImportProgress('Données lues…', 14,
         `${payload.categories.length} catégories · ${payload.cards.length} cartes`);
-      await new Promise(r => setTimeout(r, 80));
+      await new Promise(r => setTimeout(r, 60));
 
       const isLight = payload.lightExport ? ' (sans images)' : '';
       const ok = await Confirm.ask(
@@ -2070,7 +2108,7 @@ const DataIO = (() => {
       if (!ok) { _hideImportProgress(); return; }
 
       const {catCount, cardCount} = await _doImport(payload, (pct, sub) => {
-        _showImportProgress('Import en cours…', 12 + Math.round(pct * 0.86), sub);
+        _showImportProgress('Import en cours…', 14 + Math.round(pct * 0.84), sub);
       });
 
       _showImportProgress('✅ Terminé !', 100,
@@ -2082,8 +2120,8 @@ const DataIO = (() => {
       Library.show();
     } catch(e) {
       _hideImportProgress();
-      toast('❌ Erreur lors de l\'import : ' + (e.message || e));
-      console.error(e);
+      toast('❌ Erreur : ' + (e.message || String(e)));
+      console.error('Import error:', e);
     }
   }
 
