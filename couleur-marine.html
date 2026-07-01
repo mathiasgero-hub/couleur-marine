@@ -341,31 +341,35 @@ body{padding-bottom:env(safe-area-inset-bottom);}
   .category-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));}
 }
 
-/* TABLET (iPad) */
-@media(min-width:600px){
+/* TABLET (iPad) — layout côte à côte uniquement sur vraie tablette large */
+@media(min-width:600px) and (max-width:899px){
   .content{max-width:580px;margin:0 auto;}
   .setup-card{padding:22px 26px;}
   .home-buttons{max-width:420px;}
   .home-logo-icon{width:130px;height:130px;}
-  .game-content{flex-direction:row;align-items:flex-start;justify-content:center;gap:24px;}
-  .game-content.sound-mode{flex-direction:column;align-items:center;}
-  .stimulus-wrap{max-width:320px;flex-shrink:0;}
   .choices-grid.c2{grid-template-columns:repeat(2,1fr);}
   .choices-grid.c3{grid-template-columns:repeat(3,1fr);}
   .choices-grid.c4{grid-template-columns:repeat(2,1fr);}
 }
 
-/* DESKTOP */
+/* DESKTOP — app centrée dans un cadre "téléphone" */
 @media(min-width:900px){
   body{background:linear-gradient(135deg,var(--navy-deep) 0%,#1a6a72 100%);min-height:100vh;}
-  .screen{max-width:520px;margin:0 auto;border-radius:28px;overflow:hidden;
+  .screen{max-width:480px;margin:0 auto;border-radius:28px;overflow:hidden;
     box-shadow:0 24px 80px rgba(0,0,0,0.5);min-height:100vh;background:var(--bg);}
   #screen-home{border-radius:28px;}
   .modal-overlay{border-radius:28px;}
-  .card-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));}
-  .category-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));}
+  /* Jeu : forcer layout colonne dans le conteneur 480px */
+  .game-content{flex-direction:column !important;align-items:center;}
+  .stimulus-wrap{max-width:100% !important;width:100%;}
+  .choices-wrap{width:100%;}
+  .choices-grid.c3{grid-template-columns:repeat(3,1fr);}
   .choices-grid.c4{grid-template-columns:repeat(2,1fr);}
+  /* Bibliothèque / setup */
+  .card-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
+  .category-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
   .home-logo-icon{width:140px;height:140px;}
+  .content{padding:16px 20px;}
 }
 </style>
 </head>
@@ -628,6 +632,12 @@ body{padding-bottom:env(safe-area-inset-bottom);}
     </div>
     <div class="choices-wrap">
       <div class="choices-grid c3" id="choices-grid"></div>
+      <button id="game-speaker-btn" onclick="Game.playStimulus()"
+        style="display:none;margin-top:10px;background:none;border:none;cursor:pointer;
+          padding:4px 8px;align-items:center;gap:6px;font-family:'Nunito',sans-serif;
+          font-size:0.82rem;font-weight:700;color:var(--gray-mid);opacity:0.8;">
+        🔊 <span>Réécouter</span>
+      </button>
     </div>
   </div>
 </div>
@@ -1668,15 +1678,18 @@ const Game = (() => {
 
   function renderStimulus(card){
     const el=document.getElementById('stimulus-card'),mode=cfg.mode;
+    const spk=document.getElementById('game-speaker-btn');
     if(mode==='img-word'){
-      el.innerHTML=`<img class="stimulus-img" src="${card.imageData||''}" alt="${card.word}">
-        <button class="stimulus-speaker-btn" onclick="Game.playStimulus()">🔊</button>`;
+      el.innerHTML=`<img class="stimulus-img" src="${card.imageData||''}" alt="${card.word}">`;
+      if(spk) spk.style.display='flex';
     } else if(mode==='word-img'){
-      el.innerHTML=`<div class="stimulus-word">${card.word}</div>
-        <button class="stimulus-speaker-btn" onclick="Game.playStimulus()">🔊</button>`;
+      el.innerHTML=`<div class="stimulus-word">${card.word}</div>`;
+      if(spk) spk.style.display='flex';
     } else {
+      // sound modes: keep large speaker in the stimulus
       el.innerHTML=`<div class="stimulus-sound">🔊</div>
         <button class="stimulus-speaker-btn" onclick="Game.playStimulus()">▶</button>`;
+      if(spk) spk.style.display='none';
     }
   }
 
@@ -1715,7 +1728,7 @@ const Game = (() => {
   function playChoice(cardId){const c=cfg.pool.find(x=>x.id===cardId);if(c)playCardSound(c);}
 
   async function playCardSound(card){
-    const btn=document.querySelector('.stimulus-speaker-btn');
+    const btn=document.getElementById('game-speaker-btn')||document.querySelector('.stimulus-speaker-btn');
     if(btn)btn.classList.add('playing');
     if(card.audioData) await AudioEngine.playDataUrl(card.audioData);
     else TTS.speak(card.word);
@@ -2026,15 +2039,28 @@ const DataIO = (() => {
   async function importAll(input) {
     const file = input.files[0]; if (!file) return;
     try {
-      _showImportProgress('Lecture du fichier…', 2, file.name);
-      await new Promise(r => setTimeout(r, 50));
-      const text = await file.text();
-      _showImportProgress('Analyse des données…', 8, '');
-      await new Promise(r => setTimeout(r, 50));
-      const payload = JSON.parse(text);
-      if (!payload.categories || !payload.cards) {
-        _hideImportProgress(); toast('❌ Format invalide'); return;
+      const sizeMb = Math.round(file.size / 1024 / 1024);
+      _showImportProgress('Lecture du fichier…', 2, `${file.name} · ${sizeMb} Mo`);
+      await new Promise(r => setTimeout(r, 80));
+
+      // Response.json() uses the browser's native streaming parser
+      // — avoids créer une chaîne intermédiaire de 500 Mo en RAM
+      let payload;
+      try {
+        payload = await new Response(file).json();
+      } catch(parseErr) {
+        _hideImportProgress();
+        toast('❌ Fichier JSON invalide ou corrompu'); return;
       }
+
+      if (!payload.categories || !payload.cards) {
+        _hideImportProgress(); toast('❌ Format de fichier non reconnu'); return;
+      }
+
+      _showImportProgress('Données lues…', 12,
+        `${payload.categories.length} catégories · ${payload.cards.length} cartes`);
+      await new Promise(r => setTimeout(r, 80));
+
       const isLight = payload.lightExport ? ' (sans images)' : '';
       const ok = await Confirm.ask(
         'Importer les données ?',
@@ -2044,17 +2070,20 @@ const DataIO = (() => {
       if (!ok) { _hideImportProgress(); return; }
 
       const {catCount, cardCount} = await _doImport(payload, (pct, sub) => {
-        _showImportProgress('Import en cours…', 10 + Math.round(pct * 0.88), sub);
+        _showImportProgress('Import en cours…', 12 + Math.round(pct * 0.86), sub);
       });
 
-      _showImportProgress('✅ Terminé !', 100, `${catCount} catégorie(s) · ${cardCount} carte(s) importées`);
+      _showImportProgress('✅ Terminé !', 100,
+        `${catCount} catégorie(s) · ${cardCount} carte(s) importées`);
       await new Promise(r => setTimeout(r, 1400));
       _hideImportProgress();
       input.value = '';
       toast(`✅ ${catCount} catégorie(s) · ${cardCount} carte(s) importées !`, '#27ae60');
       Library.show();
     } catch(e) {
-      _hideImportProgress(); toast('❌ Erreur lors de l\'import'); console.error(e);
+      _hideImportProgress();
+      toast('❌ Erreur lors de l\'import : ' + (e.message || e));
+      console.error(e);
     }
   }
 
