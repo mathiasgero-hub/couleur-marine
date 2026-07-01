@@ -373,40 +373,6 @@ body{padding-bottom:env(safe-area-inset-bottom);}
 
 <!-- ═══ HOME ═══ -->
 <!-- == PREMIER DÉMARRAGE == -->
-<div id="screen-firstrun" class="screen" style="background:linear-gradient(160deg,var(--navy-deep) 0%,#1a6a72 60%,var(--teal) 100%);align-items:center;justify-content:center;padding:40px 24px;gap:32px;">
-  <div style="text-align:center;z-index:1;">
-    <span style="font-size:3.5rem;display:block;margin-bottom:8px;">⚓</span>
-    <div class="brand" style="font-size:clamp(2.2rem,8vw,3.6rem);color:var(--white);text-shadow:0 3px 16px rgba(0,0,0,0.5);">Couleur Marine</div>
-    <div style="color:var(--teal-light);font-size:0.85rem;letter-spacing:4px;text-transform:uppercase;font-weight:700;margin-top:8px;">Bienvenue à bord !</div>
-  </div>
-  <div style="background:rgba(255,255,255,0.13);backdrop-filter:blur(8px);border-radius:24px;padding:32px 28px;width:100%;max-width:380px;border:1px solid rgba(255,255,255,0.2);text-align:center;z-index:1;">
-    <div style="font-size:2.5rem;margin-bottom:12px;">🗂️</div>
-    <h2 style="color:var(--white);font-size:1.25rem;margin-bottom:10px;">Charger tes cartes</h2>
-    <p style="color:var(--teal-light);font-size:0.95rem;line-height:1.5;margin-bottom:24px;">
-      Sélectionne le fichier de sauvegarde<br><strong style="color:var(--gold);">couleur-marine-complet-…json</strong><br>pour retrouver toutes tes cartes.
-    </p>
-    <button class="btn btn-primary btn-block" style="font-size:1.1rem;padding:16px;"
-      onclick="document.getElementById('input-firstrun').click()">
-      📂 Choisir le fichier JSON
-    </button>
-    <input type="file" id="input-firstrun" accept=".json" style="display:none"
-      onchange="DataIO.importFirstRun(this)">
-    <button class="btn btn-secondary btn-block" style="margin-top:12px;opacity:0.7;font-size:0.9rem;"
-      onclick="showScreen('home')">
-      Commencer sans données →
-    </button>
-  </div>
-  <div id="firstrun-progress" style="display:none;width:100%;max-width:380px;z-index:1;">
-    <div style="background:rgba(255,255,255,0.13);border-radius:24px;padding:28px 24px;border:1px solid rgba(255,255,255,0.2);text-align:center;">
-      <div style="font-size:2rem;margin-bottom:10px;">⏳</div>
-      <div id="firstrun-text" style="color:var(--white);font-weight:700;margin-bottom:14px;">Chargement…</div>
-      <div style="background:rgba(255,255,255,0.2);border-radius:6px;height:12px;overflow:hidden;margin-bottom:10px;">
-        <div id="firstrun-bar" style="height:100%;background:var(--gold);width:0%;transition:width 0.3s;border-radius:6px;"></div>
-      </div>
-      <div id="firstrun-sub" style="color:var(--teal-light);font-size:0.85rem;">Ne ferme pas cette fenêtre…</div>
-    </div>
-  </div>
-</div>
 
 <div id="screen-home" class="screen active">
   <div class="home-logo">
@@ -770,6 +736,16 @@ body{padding-bottom:env(safe-area-inset-bottom);}
           <div class="setting-desc">Restaurer depuis un export précédent</div>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('input-import-json').click()">📥 Importer</button>
+      </div>
+      <div id="import-progress-wrap" style="display:none;margin-top:4px;margin-bottom:8px;padding:14px 16px;background:var(--bg);border-radius:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span id="import-progress-text" style="font-weight:700;font-size:0.88rem;color:var(--navy);">Import en cours…</span>
+          <span id="import-progress-pct" style="font-size:0.82rem;color:var(--gray-mid);">0%</span>
+        </div>
+        <div style="background:var(--gray-light);border-radius:6px;height:8px;overflow:hidden;">
+          <div id="import-progress-bar" style="height:100%;background:var(--teal);width:0%;transition:width 0.2s;border-radius:6px;"></div>
+        </div>
+        <div id="import-progress-sub" style="font-size:0.78rem;color:var(--gray-mid);margin-top:6px;">Préparation…</div>
       </div>
       <h3>🗑️ Données</h3>
       <div class="setting-row">
@@ -2033,26 +2009,52 @@ const DataIO = (() => {
     return {catCount, cardCount};
   }
 
+  function _showImportProgress(text, pct, sub) {
+    const wrap = document.getElementById('import-progress-wrap');
+    if (!wrap) return;
+    wrap.style.display = '';
+    document.getElementById('import-progress-text').textContent = text;
+    document.getElementById('import-progress-bar').style.width = pct + '%';
+    document.getElementById('import-progress-pct').textContent = pct + '%';
+    document.getElementById('import-progress-sub').textContent = sub || '';
+  }
+  function _hideImportProgress() {
+    const wrap = document.getElementById('import-progress-wrap');
+    if (wrap) wrap.style.display = 'none';
+  }
+
   async function importAll(input) {
     const file = input.files[0]; if (!file) return;
     try {
-      toast('⏳ Lecture du fichier…');
+      _showImportProgress('Lecture du fichier…', 2, file.name);
+      await new Promise(r => setTimeout(r, 50));
       const text = await file.text();
+      _showImportProgress('Analyse des données…', 8, '');
+      await new Promise(r => setTimeout(r, 50));
       const payload = JSON.parse(text);
-      if (!payload.categories || !payload.cards) { toast('❌ Format invalide'); return; }
-      const isLight = payload.lightExport ? ' (sans images — à ré-importer depuis tes dossiers)' : '';
+      if (!payload.categories || !payload.cards) {
+        _hideImportProgress(); toast('❌ Format invalide'); return;
+      }
+      const isLight = payload.lightExport ? ' (sans images)' : '';
       const ok = await Confirm.ask(
         'Importer les données ?',
         `${payload.categories.length} catégories · ${payload.cards.length} cartes${isLight}`,
         'Importer'
       );
-      if (!ok) return;
-      const {catCount, cardCount} = await _doImport(payload);
+      if (!ok) { _hideImportProgress(); return; }
+
+      const {catCount, cardCount} = await _doImport(payload, (pct, sub) => {
+        _showImportProgress('Import en cours…', 10 + Math.round(pct * 0.88), sub);
+      });
+
+      _showImportProgress('✅ Terminé !', 100, `${catCount} catégorie(s) · ${cardCount} carte(s) importées`);
+      await new Promise(r => setTimeout(r, 1400));
+      _hideImportProgress();
       input.value = '';
       toast(`✅ ${catCount} catégorie(s) · ${cardCount} carte(s) importées !`, '#27ae60');
       Library.show();
     } catch(e) {
-      toast('❌ Erreur lors de l\'import'); console.error(e);
+      _hideImportProgress(); toast('❌ Erreur lors de l\'import'); console.error(e);
     }
   }
 
@@ -2307,11 +2309,6 @@ async function init(){
     home.appendChild(b);
   }
 
-  // First-run detection: if DB is empty, show onboarding screen
-  const cats = await DB.getAll('categories');
-  if (cats.length === 0) {
-    showScreen('firstrun');
-  }
 }
 init();
 </script>
