@@ -549,13 +549,6 @@ body{padding-bottom:env(safe-area-inset-bottom);}
   </div>
   <div class="content">
     <div class="setup-card">
-      <h3>📂 Catégories à jouer</h3>
-      <div style="margin-bottom:10px;">
-        <button class="chip selected" id="btn-all-cats" onclick="Setup.toggleAllCats()">Toutes</button>
-      </div>
-      <div class="category-select-list" id="setup-cat-list"></div>
-    </div>
-    <div class="setup-card">
       <h3>🎯 Mode d'association</h3>
       <div class="mode-grid" id="setup-modes">
         <button class="mode-btn selected" data-mode="img-word" onclick="Setup.selectMode(this)">🖼️ → 🔤<br><small>Image → Mot</small></button>
@@ -607,6 +600,13 @@ body{padding-bottom:env(safe-area-inset-bottom);}
           <span style="font-weight:700;color:var(--gray-mid);font-size:0.9rem;">points à atteindre</span>
         </div>
       </div>
+    </div>
+    <div class="setup-card">
+      <h3>📂 Catégories à jouer</h3>
+      <div style="margin-bottom:10px;">
+        <button class="chip selected" id="btn-all-cats" onclick="Setup.toggleAllCats()">Toutes</button>
+      </div>
+      <div class="category-select-list" id="setup-cat-list"></div>
     </div>
     <div id="setup-warning" class="warning-box" style="display:none"></div>
     <br>
@@ -899,6 +899,23 @@ const DB = (() => {
 
   async function getAll(store) { await open(); return p(tx(store).getAll()); }
   async function get(store, key) { await open(); return p(tx(store).get(key)); }
+  // Charge les cartes SANS imageData — 100x plus rapide sur mobile
+  async function getAllLight(store) {
+    await open();
+    return new Promise((res, rej) => {
+      const req = tx(store).openCursor();
+      const results = [];
+      req.onsuccess = e => {
+        const cursor = e.target.result;
+        if (cursor) {
+          const {imageData, ...rest} = cursor.value;
+          results.push(rest);
+          cursor.continue();
+        } else { res(results); }
+      };
+      req.onerror = () => rej(req.error);
+    });
+  }
   async function put(store, obj) { await open(); return p(tx(store,'readwrite').put(obj)); }
   async function del(store, key) { await open(); return p(tx(store,'readwrite').delete(key)); }
   async function getByIndex(store, idx, val) { await open(); return p(tx(store).index(idx).getAll(val)); }
@@ -906,7 +923,7 @@ const DB = (() => {
   async function setSetting(key, value) { return put('settings',{key,value}); }
   async function clearStore(store) { await open(); return p(tx(store,'readwrite').clear()); }
 
-  return {open, getAll, get, put, del, getByIndex, getSetting, setSetting, clearStore};
+  return {open, getAll, getAllLight, get, put, del, getByIndex, getSetting, setSetting, clearStore};
 })();
 
 // ══════════════════════════════════════════════════
@@ -1478,7 +1495,7 @@ const Setup = (() => {
 
   async function init() {
     const cats=await DB.getAll('categories');
-    const allCards=await DB.getAll('cards');
+    const allCards=await DB.getAllLight('cards');
     const list=document.getElementById('setup-cat-list');
     if(!cats.length){list.innerHTML='<div style="color:var(--gray-mid);font-size:0.9rem;padding:10px 0;">Aucune catégorie. Crée des cartes d\'abord.</div>';return;}
     config.catIds=cats.map(c=>c.id);
@@ -1538,7 +1555,7 @@ const Setup = (() => {
   }
 
   async function validate(){
-    const allCards=await DB.getAll('cards');
+    const allCards=await DB.getAllLight('cards');
     const eligible=allCards.filter(c=>config.catIds.includes(c.categoryId));
     const warn=document.getElementById('setup-warning');
     if(!eligible.length){warn.style.display='';warn.textContent='⚠️ Aucune carte sélectionnée.';return false;}
@@ -1548,7 +1565,7 @@ const Setup = (() => {
 
   async function start(){
     const ok=await validate(); if(!ok){toast('⚠️ Corrige les problèmes');return;}
-    const allCards=await DB.getAll('cards');
+    const allCards=await DB.getAllLight('cards'); // sans images — chargement rapide
     const eligible=allCards.filter(c=>config.catIds.includes(c.categoryId));
     if(!eligible.length){toast('⚠️ Aucune carte !');return;}
     Game.start({...config,pool:eligible});
@@ -1604,12 +1621,24 @@ const Game = (() => {
     } else el.style.display='none';
   }
 
-  function renderQuestion(){
+  // Cache d'images pour la session de jeu (évite de re-fetcher la même image)
+  const _imgCache = {};
+  async function _loadImage(card) {
+    if (card.imageData) return card.imageData;
+    if (_imgCache[card.id]) return _imgCache[card.id];
+    const full = await DB.get('cards', card.id);
+    if (full && full.imageData) {
+      _imgCache[card.id] = full.imageData;
+      card.imageData = full.imageData; // mise en cache dans le pool
+    }
+    return card.imageData || '';
+  }
+
+  async function renderQuestion(){
     if(current>=queue.length){end();return;}
     transitioning=false;
     const card=queue[current],total=queue.length;
     const nChoices=Math.min(cfg.choices,cfg.pool.length);
-    // Progress bar: score-toward-target when targetScore set, else card progress
     const pct = cfg.targetScore > 0
       ? Math.min(100, Math.round(score / cfg.targetScore * 100))
       : Math.round(current / total * 100);
@@ -1618,51 +1647,61 @@ const Game = (() => {
     document.getElementById('game-instruction').textContent=INSTRUCTIONS[cfg.mode];
     const others=shuffle(cfg.pool.filter(c=>c.id!==card.id));
     const choices=shuffle([card,...others.slice(0,nChoices-1)]);
-    renderStimulus(card);
-    renderChoices(choices,card,nChoices);
+    await renderStimulus(card);
+    await renderChoices(choices,card,nChoices);
     renderStreak();
     if(State.settings.autoplay&&cfg.mode.startsWith('sound'))
       setTimeout(()=>playCardSound(card),400);
   }
 
-  function renderStimulus(card){
+  async function renderStimulus(card){
     const el=document.getElementById('stimulus-card'),mode=cfg.mode;
     const spk=document.getElementById('game-speaker-btn');
     if(mode==='img-word'){
-      el.innerHTML=`<img class="stimulus-img" src="${card.imageData||''}" alt="${card.word}">`;
+      el.innerHTML=`<img class="stimulus-img" src="" alt="${card.word}">`;
       if(spk) spk.style.display='flex';
+      const img = el.querySelector('img');
+      img.src = await _loadImage(card);
     } else if(mode==='word-img'){
       el.innerHTML=`<div class="stimulus-word">${card.word}</div>`;
       if(spk) spk.style.display='flex';
     } else {
-      // sound modes: keep large speaker in the stimulus
       el.innerHTML=`<div class="stimulus-sound">🔊</div>
         <button class="stimulus-speaker-btn" onclick="Game.playStimulus()">▶</button>`;
       if(spk) spk.style.display='none';
     }
   }
 
-  function renderChoices(choices,correctCard,nChoices){
+  async function renderChoices(choices,correctCard,nChoices){
     const grid=document.getElementById('choices-grid'),mode=cfg.mode;
     grid.className=`choices-grid c${nChoices}`;
-    // word-img: NO word label under images (would give away the answer)
-    const showWordUnderImage = (mode!=='word-img');
     grid.innerHTML=choices.map(c=>{
       if(mode==='img-word'||mode==='sound-word'){
+        const spkBtn = mode==='sound-word'
+          ? `<span class="choice-sound-btn" onclick="event.stopPropagation();Game.playChoice('${c.id}')">🔈</span>`
+          : '';
         return `<button class="choice-btn" data-id="${c.id}" onclick="Game.answer('${c.id}','${correctCard.id}')">
-          <span class="choice-word">${c.word}</span>
-          <span class="choice-sound-btn" onclick="event.stopPropagation();Game.playChoice('${c.id}')">🔈</span>
+          <span class="choice-word">${c.word}</span>${spkBtn}
         </button>`;
       } else {
         // word-img and sound-img: show image, word only in sound-img
         return `<button class="choice-btn" data-id="${c.id}" onclick="Game.answer('${c.id}','${correctCard.id}')">
-          <img class="choice-img" src="${c.imageData||''}" alt="" loading="lazy">
+          <img class="choice-img" src="" data-card-id="${c.id}" alt="" loading="lazy">
           ${mode==='sound-img'?`<span class="choice-word">${c.word}</span>`:''}
         </button>`;
       }
     }).join('');
     const gc=document.getElementById('game-content');
     gc.className='game-content'+(mode.startsWith('sound')?' sound-mode':'');
+
+    // Charger les images des choix en parallèle (lazy)
+    if(mode==='word-img'||mode==='sound-img'){
+      choices.forEach(async c => {
+        const src = await _loadImage(c);
+        const img = grid.querySelector(`img[data-card-id="${c.id}"]`);
+        if(img) img.src = src;
+      });
+    }
   }
 
   function renderStreak(){
