@@ -1,0 +1,2344 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Couleur Marine ⚓</title>
+<meta name="description" content="Application de flash cards nautique pour enfants de primaire">
+<meta name="theme-color" content="#0B3549">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Couleur Marine">
+<link rel="apple-touch-icon" id="apple-touch-icon" href="">
+<link rel="manifest" id="pwa-manifest" href="">
+<link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --navy:#24292C;--navy-deep:#0B3549;--teal:#28AAB3;--teal-light:#7FC5C7;
+  --coral:#E64448;--gold:#EAB244;--gray-light:#E8EFEF;--gray-mid:#696C6D;
+  --white:#fff;--bg:#EEF7F8;--radius:16px;
+  --shadow:0 4px 20px rgba(11,53,75,0.13);
+}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--navy);min-height:100vh;overflow-x:hidden;}
+h1,h2,.brand{font-family:'Pirata One',cursive;}
+
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* NAV */
+.nav-bar{background:var(--navy-deep);color:var(--white);padding:12px 20px;display:flex;
+  align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.3);}
+.nav-bar h1{font-size:1.3rem;color:var(--teal-light);letter-spacing:1px;flex:1;}
+.nav-back{background:none;border:none;color:var(--teal-light);font-size:1.4rem;cursor:pointer;
+  padding:4px 8px;border-radius:8px;line-height:1;}
+.nav-back:active{background:rgba(255,255,255,0.1);}
+.nav-score{background:var(--gold);color:var(--navy);padding:4px 14px;border-radius:20px;
+  font-weight:800;font-size:0.85rem;white-space:nowrap;}
+
+/* HOME */
+#screen-home{background:linear-gradient(160deg,var(--navy-deep) 0%,#1a6a72 60%,var(--teal) 100%);
+  align-items:center;justify-content:center;padding:40px 24px;gap:28px;position:relative;overflow:hidden;}
+.home-logo{text-align:center;z-index:1;}
+.home-logo .brand{font-size:clamp(2.6rem,9vw,4.2rem);color:var(--white);
+  text-shadow:0 3px 16px rgba(0,0,0,0.5);line-height:1;}
+.home-logo .anchor{font-size:2.5rem;display:block;margin-bottom:4px;}
+.home-logo .subtitle{color:var(--teal-light);font-size:0.85rem;letter-spacing:4px;
+  text-transform:uppercase;font-weight:700;margin-top:8px;}
+.home-score-display{background:rgba(255,255,255,0.12);backdrop-filter:blur(6px);
+  border-radius:20px;padding:8px 28px;color:var(--gold);font-weight:800;font-size:1.1rem;
+  border:1px solid rgba(255,255,255,0.2);cursor:pointer;}
+.home-buttons{display:flex;flex-direction:column;gap:14px;width:100%;max-width:320px;z-index:1;}
+.btn-home{display:flex;align-items:center;gap:16px;padding:18px 24px;border-radius:var(--radius);
+  border:none;cursor:pointer;font-family:'Nunito',sans-serif;font-size:1.15rem;font-weight:800;
+  transition:transform 0.15s,box-shadow 0.15s;box-shadow:var(--shadow);}
+.btn-home:active{transform:scale(0.96);}
+.btn-home .icon{font-size:1.8rem;}
+.btn-play{background:var(--coral);color:var(--white);}
+.btn-library{background:var(--gold);color:var(--navy);}
+.btn-ranking{background:rgba(255,255,255,0.18);color:var(--white);border:2px solid rgba(255,255,255,0.3);backdrop-filter:blur(4px);}
+.btn-settings{background:rgba(255,255,255,0.9);color:var(--navy-deep);}
+.home-wave{position:absolute;bottom:-2px;left:0;width:100%;opacity:0.12;}
+.home-bubble{position:absolute;border-radius:50%;background:rgba(255,255,255,0.08);}
+
+/* CONTENT */
+.content{flex:1;padding:20px;overflow-y:auto;}
+.section-title{font-weight:800;font-size:1.1rem;color:var(--navy-deep);margin-bottom:14px;}
+
+/* CATEGORIES */
+.category-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;}
+.category-card{background:var(--white);border-radius:var(--radius);padding:18px 12px;
+  text-align:center;box-shadow:var(--shadow);cursor:pointer;
+  transition:transform 0.15s;border:3px solid transparent;position:relative;}
+.category-card:active{transform:scale(0.96);}
+.category-card.selected{border-color:var(--teal);}
+.cat-color-bar{height:6px;border-radius:4px;margin-bottom:12px;}
+.cat-name{font-weight:800;font-size:0.95rem;color:var(--navy);word-break:break-word;}
+.cat-count{font-size:0.78rem;color:var(--gray-mid);margin-top:4px;}
+.cat-actions{position:absolute;top:6px;right:6px;display:flex;gap:3px;opacity:0;transition:opacity 0.2s;}
+.category-card:hover .cat-actions,.category-card.touch-hover .cat-actions{opacity:1;}
+.cat-action-btn{background:var(--gray-light);border:none;border-radius:6px;width:26px;height:26px;
+  cursor:pointer;font-size:0.75rem;display:flex;align-items:center;justify-content:center;}
+.cat-action-btn:hover{background:var(--coral);color:white;}
+
+/* CARD GRID */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;}
+.flash-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);
+  overflow:hidden;position:relative;}
+.flash-card-img-wrap{width:100%;aspect-ratio:1;background:var(--gray-light);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.flash-card-img-wrap img{width:100%;height:100%;object-fit:contain;}
+.flash-card-img-wrap .no-img{font-size:3rem;color:var(--gray-mid);}
+.flash-card-body{padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.flash-card-word{font-weight:800;font-size:0.9rem;color:var(--navy);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.audio-icon-btn{background:none;border:none;font-size:1.2rem;cursor:pointer;padding:4px;border-radius:6px;line-height:1;flex-shrink:0;}
+.audio-icon-btn.has-audio{color:var(--teal);}
+.audio-icon-btn.no-audio{color:var(--gray-mid);}
+.flash-card-actions{position:absolute;top:6px;right:6px;display:flex;gap:4px;opacity:0;transition:opacity 0.2s;}
+.flash-card:hover .flash-card-actions,.flash-card.touch-hover .flash-card-actions{opacity:1;}
+.card-action-btn{background:rgba(255,255,255,0.9);border:none;border-radius:8px;
+  padding:4px 7px;font-size:0.75rem;cursor:pointer;}
+.card-action-btn.del:hover{background:var(--coral);color:white;}
+
+/* BUTTONS */
+.btn{padding:12px 22px;border-radius:12px;border:none;cursor:pointer;
+  font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;transition:transform 0.15s;}
+.btn:active{transform:scale(0.96);}
+.btn-primary{background:var(--teal);color:white;box-shadow:0 4px 14px rgba(40,170,179,0.3);}
+.btn-primary:hover{background:#22969e;}
+.btn-secondary{background:var(--gray-light);color:var(--navy);}
+.btn-danger{background:var(--coral);color:white;}
+.btn-gold{background:var(--gold);color:var(--navy);box-shadow:0 4px 14px rgba(234,178,68,0.3);}
+.btn-outline{background:transparent;border:2px solid var(--teal);color:var(--teal);}
+.btn-lg{padding:16px 32px;font-size:1.15rem;border-radius:16px;}
+.btn-sm{padding:8px 14px;font-size:0.85rem;border-radius:10px;}
+.btn-block{width:100%;display:block;text-align:center;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;}
+.fab{position:fixed;bottom:24px;right:24px;width:60px;height:60px;border-radius:50%;
+  background:var(--teal);color:white;border:none;font-size:1.8rem;cursor:pointer;
+  box-shadow:0 6px 20px rgba(40,170,179,0.4);display:flex;align-items:center;
+  justify-content:center;transition:transform 0.15s;z-index:50;}
+.fab:active{transform:scale(0.88);}
+
+/* EDITOR */
+.editor-image-area{width:100%;max-width:280px;aspect-ratio:1;border-radius:var(--radius);
+  border:3px dashed var(--teal);display:flex;flex-direction:column;align-items:center;
+  justify-content:center;cursor:pointer;overflow:hidden;background:var(--white);
+  margin:0 auto;position:relative;}
+.editor-image-area:hover{border-color:var(--navy-deep);}
+.editor-image-area img{width:100%;height:100%;object-fit:contain;position:absolute;inset:0;}
+.editor-img-placeholder{text-align:center;color:var(--gray-mid);pointer-events:none;}
+.editor-img-placeholder .icon{font-size:2.8rem;display:block;margin-bottom:6px;}
+.form-group{margin-bottom:18px;}
+.form-label{display:block;font-weight:700;margin-bottom:6px;color:var(--navy-deep);font-size:0.9rem;}
+.form-input,.form-select{width:100%;padding:12px 14px;border-radius:12px;
+  border:2px solid var(--gray-light);font-family:'Nunito',sans-serif;font-size:1rem;
+  font-weight:600;color:var(--navy);transition:border-color 0.2s;background:white;}
+.form-input:focus,.form-select:focus{outline:none;border-color:var(--teal);}
+.form-select{cursor:pointer;}
+.audio-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.record-btn{background:var(--coral);color:white;border:none;padding:10px 18px;
+  border-radius:12px;font-family:'Nunito',sans-serif;font-size:0.95rem;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;gap:8px;}
+.record-btn.recording{background:#b71c1c;animation:pulse 0.8s infinite;}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.04);}}
+.rec-dot{width:10px;height:10px;border-radius:50%;background:white;}
+.audio-preview{display:none;align-items:center;gap:8px;padding:8px 14px;
+  background:var(--gray-light);border-radius:10px;font-size:0.85rem;font-weight:600;}
+.audio-preview.visible{display:flex;}
+
+/* IMPORT */
+.import-dropzone{border:3px dashed var(--teal);border-radius:var(--radius);padding:32px 20px;
+  text-align:center;cursor:pointer;transition:background 0.2s;background:rgba(40,170,179,0.04);}
+.import-dropzone:hover{background:rgba(40,170,179,0.12);}
+.import-dropzone .icon{font-size:2.8rem;color:var(--teal);margin-bottom:8px;}
+.import-dropzone p{font-weight:600;color:var(--gray-mid);font-size:0.95rem;line-height:1.6;}
+
+/* LIBRARY HEADER */
+.lib-header{display:flex;align-items:center;gap:10px;padding:14px 20px;
+  background:white;border-bottom:2px solid var(--gray-light);flex-wrap:wrap;}
+.lib-breadcrumb{font-weight:800;color:var(--navy-deep);}
+
+/* SETUP */
+.setup-card{background:white;border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow);}
+.setup-card h3{font-weight:800;color:var(--navy-deep);margin-bottom:14px;font-size:1rem;}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.mode-btn{padding:12px 8px;border-radius:12px;border:2px solid var(--gray-light);
+  background:white;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;
+  font-size:0.82rem;text-align:center;color:var(--navy);transition:all 0.15s;line-height:1.4;}
+.mode-btn.selected{border-color:var(--teal);background:var(--teal);color:white;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{padding:8px 16px;border-radius:20px;border:2px solid var(--gray-light);
+  background:white;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;
+  font-size:0.88rem;color:var(--navy);transition:all 0.15s;}
+.chip.selected{border-color:var(--teal);background:var(--teal);color:white;}
+.category-select-list{display:flex;flex-direction:column;gap:8px;}
+.cat-select-item{display:flex;align-items:center;gap:12px;padding:10px 14px;
+  background:var(--gray-light);border-radius:10px;cursor:pointer;}
+.cat-select-item.selected{background:rgba(40,170,179,0.15);}
+.cat-select-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--gray-mid);
+  display:flex;align-items:center;justify-content:center;font-size:0.85rem;flex-shrink:0;}
+.cat-select-item.selected .cat-select-check{background:var(--teal);border-color:var(--teal);color:white;}
+.cat-select-name{font-weight:700;font-size:0.95rem;}
+.cat-select-count{font-size:0.78rem;color:var(--gray-mid);}
+.warning-box{background:#fff3cd;border-left:4px solid var(--gold);border-radius:8px;
+  padding:10px 14px;font-size:0.85rem;font-weight:600;color:#856404;margin-top:8px;}
+
+/* GAME */
+#screen-game{background:var(--bg);}
+.game-header{background:var(--navy-deep);padding:12px 16px;display:flex;align-items:center;gap:10px;}
+.game-progress-bar{flex:1;height:10px;background:rgba(255,255,255,0.2);border-radius:10px;overflow:hidden;}
+.game-progress-fill{height:100%;background:var(--gold);border-radius:10px;transition:width 0.4s ease;}
+.game-score-badge{background:var(--gold);color:var(--navy);padding:4px 14px;
+  border-radius:20px;font-weight:800;font-size:0.85rem;white-space:nowrap;}
+.game-timer{background:var(--coral);color:white;padding:4px 14px;
+  border-radius:20px;font-weight:800;font-size:0.85rem;min-width:56px;text-align:center;}
+.game-timer.warning{animation:pulse 0.6s infinite;}
+.game-player-name{color:var(--teal-light);font-size:0.8rem;font-weight:700;white-space:nowrap;}
+.game-content{flex:1;padding:16px;display:flex;flex-direction:column;align-items:center;gap:16px;overflow-y:auto;}
+.game-streak{display:flex;gap:4px;justify-content:center;min-height:26px;flex-wrap:wrap;}
+.streak-star{font-size:1.1rem;animation:pop-in 0.3s ease;}
+@keyframes pop-in{0%{transform:scale(0);}70%{transform:scale(1.3);}100%{transform:scale(1);}}
+.streak-label{font-weight:800;font-size:0.85rem;color:var(--coral);align-self:center;}
+.game-instruction{font-size:0.85rem;font-weight:700;color:var(--gray-mid);
+  text-transform:uppercase;letter-spacing:1px;text-align:center;}
+.penalty-flash{color:var(--coral);font-weight:800;font-size:0.85rem;text-align:center;
+  animation:fade-out 1.5s forwards;}
+@keyframes fade-out{0%{opacity:1;}100%{opacity:0;}}
+.stimulus-wrap{width:100%;max-width:380px;}
+.stimulus-card{background:white;border-radius:20px;box-shadow:0 8px 32px rgba(11,53,75,0.14);
+  overflow:hidden;position:relative;}
+.stimulus-img{width:100%;aspect-ratio:4/3;object-fit:contain;background:var(--gray-light);display:block;}
+.stimulus-word{padding:22px;text-align:center;font-size:clamp(1.6rem,6vw,2.8rem);
+  font-weight:900;color:var(--navy);line-height:1.2;}
+.stimulus-sound{padding:36px 20px;text-align:center;font-size:clamp(3rem,10vw,5rem);}
+.stimulus-speaker-btn{position:absolute;bottom:10px;right:10px;background:var(--teal);
+  color:white;border:none;border-radius:50%;width:46px;height:46px;font-size:1.3rem;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 14px rgba(40,170,179,0.4);transition:transform 0.15s;}
+.stimulus-speaker-btn:active{transform:scale(0.88);}
+.stimulus-speaker-btn.playing{animation:pulse 0.6s infinite;}
+.choices-wrap{width:100%;max-width:580px;}
+.choices-grid{display:grid;gap:10px;}
+.choices-grid.c2{grid-template-columns:1fr 1fr;}
+.choices-grid.c3{grid-template-columns:1fr 1fr 1fr;}
+.choices-grid.c4{grid-template-columns:1fr 1fr 1fr 1fr;}
+.choice-btn{background:white;border:3px solid var(--gray-light);border-radius:var(--radius);
+  padding:8px;cursor:pointer;transition:all 0.15s;overflow:hidden;
+  box-shadow:0 2px 8px rgba(0,0,0,0.07);display:flex;flex-direction:column;align-items:center;}
+.choice-btn:active:not(.disabled){transform:scale(0.95);}
+.choice-btn.correct{border-color:#27ae60;background:#eafaf1;animation:c-bounce 0.35s;}
+.choice-btn.wrong{border-color:var(--coral);background:#fdecea;animation:w-shake 0.35s;}
+.choice-btn.disabled{pointer-events:none;opacity:0.55;}
+.choice-btn.correct.disabled{opacity:1;}
+@keyframes c-bounce{0%,100%{transform:scale(1);}50%{transform:scale(1.06);}}
+@keyframes w-shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-7px);}75%{transform:translateX(7px);}}
+.choice-img{width:100%;aspect-ratio:1;object-fit:contain;background:var(--gray-light);border-radius:8px;}
+.choice-word{padding:8px 4px;font-weight:800;font-size:clamp(0.75rem,2.5vw,1.05rem);
+  color:var(--navy);text-align:center;width:100%;}
+.choice-sound-btn{font-size:1.6rem;padding:10px;}
+
+/* RESULTS */
+#screen-results{background:linear-gradient(160deg,var(--navy-deep) 0%,#1a6a72 60%,var(--teal) 100%);
+  align-items:center;justify-content:center;padding:40px 24px;gap:18px;}
+.results-player{color:var(--teal-light);font-size:1rem;font-weight:700;letter-spacing:1px;}
+.results-emoji{font-size:4rem;text-align:center;}
+.results-title{font-family:'Pirata One',cursive;font-size:clamp(1.8rem,6vw,3rem);color:var(--white);text-align:center;}
+.results-score{font-size:clamp(3rem,12vw,5.5rem);font-weight:900;color:var(--gold);text-align:center;line-height:1;}
+.results-stars{font-size:2.2rem;letter-spacing:6px;text-align:center;}
+.level-badge{background:var(--gold);color:var(--navy);padding:8px 20px;border-radius:20px;font-weight:800;font-size:1rem;}
+.results-card{background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);
+  border-radius:var(--radius);padding:20px 28px;color:white;
+  border:1px solid rgba(255,255,255,0.2);width:100%;max-width:340px;}
+.results-stat{display:flex;justify-content:space-between;align-items:center;
+  padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);}
+.results-stat:last-child{border-bottom:none;}
+.results-stat-label{font-size:0.95rem;opacity:0.85;}
+.results-stat-value{font-weight:800;font-size:1.1rem;color:var(--gold);}
+.results-buttons{display:flex;flex-direction:column;gap:12px;width:100%;max-width:280px;}
+
+/* SETTINGS */
+.settings-section{background:white;border-radius:var(--radius);padding:18px;margin-bottom:14px;box-shadow:var(--shadow);}
+.settings-section h3{font-weight:800;color:var(--navy-deep);margin-bottom:14px;font-size:0.95rem;text-transform:uppercase;letter-spacing:0.5px;}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-light);}
+.setting-row:last-child{border-bottom:none;}
+.setting-info{flex:1;}
+.setting-label{font-weight:700;font-size:0.9rem;}
+.setting-desc{font-size:0.75rem;color:var(--gray-mid);margin-top:2px;}
+input[type="range"]{-webkit-appearance:none;appearance:none;width:110px;height:6px;
+  border-radius:3px;background:var(--gray-light);outline:none;cursor:pointer;}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;
+  border-radius:50%;background:var(--teal);cursor:pointer;box-shadow:0 2px 6px rgba(40,170,179,0.4);}
+.toggle{position:relative;width:48px;height:26px;flex-shrink:0;}
+.toggle input{display:none;}
+.toggle-track{position:absolute;inset:0;background:var(--gray-light);border-radius:13px;cursor:pointer;transition:background 0.2s;}
+.toggle input:checked+.toggle-track{background:var(--teal);}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;background:white;
+  border-radius:50%;transition:left 0.2s;pointer-events:none;box-shadow:0 2px 4px rgba(0,0,0,0.2);}
+.toggle input:checked~.toggle-thumb{left:25px;}
+
+/* LEADERBOARD */
+.podium-row{display:flex;align-items:center;gap:12px;padding:14px 16px;background:white;
+  border-radius:12px;margin-bottom:10px;box-shadow:var(--shadow);}
+.podium-rank{font-size:1.8rem;width:40px;text-align:center;flex-shrink:0;}
+.podium-name{font-weight:800;font-size:1rem;}
+.podium-sub{font-size:0.78rem;color:var(--gray-mid);margin-top:2px;}
+.podium-score{font-weight:900;font-size:1.3rem;color:var(--gold);margin-left:auto;}
+.podium-row.me{border:2px solid var(--teal);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;
+  display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.active{display:flex;}
+.modal{background:white;border-radius:20px;padding:26px;width:100%;max-width:460px;
+  max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+.modal-title{font-weight:800;font-size:1.2rem;color:var(--navy);margin-bottom:18px;}
+.modal-buttons{display:flex;gap:10px;justify-content:flex-end;margin-top:22px;flex-wrap:wrap;}
+
+/* TOAST */
+.toast-container{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  z-index:300;display:flex;flex-direction:column;gap:8px;pointer-events:none;align-items:center;}
+.toast{background:var(--navy);color:white;padding:10px 22px;border-radius:12px;
+  font-weight:600;font-size:0.9rem;animation:t-in 0.3s ease,t-out 0.3s ease 2.4s forwards;white-space:nowrap;}
+@keyframes t-in{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+@keyframes t-out{from{opacity:1;}to{opacity:0;}}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:60px 20px;color:var(--gray-mid);}
+.empty-state .icon{font-size:4rem;margin-bottom:14px;}
+.empty-state p{font-size:0.95rem;line-height:1.7;max-width:280px;margin:0 auto 20px;}
+
+/* CELEBRATION */
+.celebration{position:fixed;inset:0;pointer-events:none;z-index:400;overflow:hidden;}
+.confetti-piece{position:absolute;width:10px;height:10px;border-radius:2px;animation:confetti-fall linear forwards;}
+@keyframes confetti-fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1;}100%{transform:translateY(110vh) rotate(720deg);opacity:0;}}
+
+/* FEEDBACK */
+.feedback-overlay{position:fixed;inset:0;display:none;align-items:center;
+  justify-content:center;z-index:350;pointer-events:none;}
+.feedback-overlay.show{display:flex;}
+.feedback-badge{font-size:clamp(4rem,15vw,8rem);animation:badge-pop 0.5s ease forwards;}
+@keyframes badge-pop{0%{transform:scale(0);}60%{transform:scale(1.2);}100%{transform:scale(1);}}
+
+/* SAFE AREA (notch/home indicator) */
+body{padding-bottom:env(safe-area-inset-bottom);}
+.nav-bar{padding-top:max(12px,env(safe-area-inset-top));}
+#screen-home{padding-top:max(40px,calc(env(safe-area-inset-top)+20px));}
+
+/* HOME LOGO ICON */
+.home-logo-icon{width:110px;height:110px;filter:drop-shadow(0 6px 20px rgba(0,0,0,0.45));margin-bottom:4px;}
+
+/* PWA STANDALONE MODE */
+@media(display-mode:standalone){
+  .nav-bar{padding-top:max(18px,env(safe-area-inset-top));}
+}
+
+/* RESPONSIVE */
+@media(max-width:420px){
+  .choices-grid.c4{grid-template-columns:1fr 1fr;}
+  .choices-grid.c3{grid-template-columns:1fr 1fr;}
+  .mode-grid{grid-template-columns:1fr;}
+  .category-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));}
+}
+
+/* TABLET (iPad) — layout côte à côte uniquement sur vraie tablette large */
+@media(min-width:600px) and (max-width:899px){
+  .content{max-width:580px;margin:0 auto;}
+  .setup-card{padding:22px 26px;}
+  .home-buttons{max-width:420px;}
+  .home-logo-icon{width:130px;height:130px;}
+  .choices-grid.c2{grid-template-columns:repeat(2,1fr);}
+  .choices-grid.c3{grid-template-columns:repeat(3,1fr);}
+  .choices-grid.c4{grid-template-columns:repeat(2,1fr);}
+}
+
+/* DESKTOP — app centrée dans un cadre "téléphone" */
+@media(min-width:900px){
+  body{background:linear-gradient(135deg,var(--navy-deep) 0%,#1a6a72 100%);min-height:100vh;}
+  .screen{max-width:480px;margin:0 auto;border-radius:28px;overflow:hidden;
+    box-shadow:0 24px 80px rgba(0,0,0,0.5);min-height:100vh;background:var(--bg);}
+  #screen-home{border-radius:28px;}
+  .modal-overlay{border-radius:28px;}
+  /* Jeu : forcer layout colonne dans le conteneur 480px */
+  .game-content{flex-direction:column !important;align-items:center;}
+  .stimulus-wrap{max-width:100% !important;width:100%;}
+  .choices-wrap{width:100%;}
+  .choices-grid.c3{grid-template-columns:repeat(3,1fr);}
+  .choices-grid.c4{grid-template-columns:repeat(2,1fr);}
+  /* Bibliothèque / setup */
+  .card-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
+  .category-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
+  .home-logo-icon{width:140px;height:140px;}
+  .content{padding:16px 20px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ HOME ═══ -->
+<!-- == PREMIER DÉMARRAGE == -->
+
+<div id="screen-home" class="screen active">
+  <div class="home-logo">
+    <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" class="home-logo-icon" aria-label="Couleur Marine">
+      <rect width="512" height="512" rx="112" fill="#0B3549"/>
+      <rect x="0" y="365" width="512" height="147" fill="#1a5a6e"/>
+      <path d="M0 370 Q128 350 256 370 Q384 390 512 370 L512 382 Q384 402 256 382 Q128 362 0 382Z" fill="#28AAB3" opacity="0.75"/>
+      <path d="M0 398 Q110 382 220 398 Q330 414 440 398 Q480 390 512 398 L512 406 Q480 398 440 406 Q330 422 220 406 Q110 390 0 406Z" fill="#28AAB3" opacity="0.45"/>
+      <rect x="179" y="110" width="90" height="118" rx="12" fill="#fff" opacity="0.12"/>
+      <rect x="243" y="115" width="90" height="118" rx="12" fill="#fff" opacity="0.08"/>
+      <rect x="242" y="144" width="28" height="228" rx="14" fill="#EAB244"/>
+      <circle cx="256" cy="130" r="34" fill="none" stroke="#EAB244" stroke-width="22"/>
+      <rect x="172" y="214" width="168" height="22" rx="11" fill="#EAB244"/>
+      <circle cx="178" cy="225" r="15" fill="#E64448"/>
+      <circle cx="334" cy="225" r="15" fill="#E64448"/>
+      <path d="M256 372 Q200 350 182 392 Q170 420 200 424 Q228 428 247 402 L256 390 L265 402 Q284 428 312 424 Q342 420 330 392 Q312 350 256 372Z" fill="#EAB244"/>
+      <polygon points="210,280 215,295 231,295 218,305 223,320 210,310 197,320 202,305 189,295 205,295" fill="#E64448" opacity="0.9"/>
+      <polygon points="302,280 307,295 323,295 310,305 315,320 302,310 289,320 294,305 281,295 297,295" fill="#28AAB3" opacity="0.9"/>
+    </svg>
+    <div class="brand">Couleur Marine</div>
+    <div class="subtitle">Flash Cards pour enfants</div>
+  </div>
+  <div class="home-score-display" onclick="Leaderboard.show()" title="Voir le classement">
+    🏆 <span id="home-total-score">0</span> pts · Classement
+  </div>
+  <div class="home-buttons">
+    <button class="btn-home btn-play" onclick="PlayerModal.show()">
+      <span class="icon">🎮</span><span>Jouer</span>
+    </button>
+    <button class="btn-home btn-library" onclick="Library.show()">
+      <span class="icon">📚</span><span>Ma bibliothèque</span>
+    </button>
+    <button class="btn-home btn-ranking" onclick="Leaderboard.show()">
+      <span class="icon">🏆</span><span>Classement</span>
+    </button>
+    <button class="btn-home btn-settings" onclick="ParentalLock.open()">
+      <span class="icon">⚙️</span><span>Réglages</span>
+    </button>
+  </div>
+  <!-- Bouton installer l'app -->
+  <button id="btn-install-pwa" onclick="PWAInstall.trigger()" style="display:none;
+    background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.4);
+    color:var(--white);border-radius:30px;padding:10px 24px;font-family:'Nunito',sans-serif;
+    font-weight:800;font-size:0.9rem;cursor:pointer;backdrop-filter:blur(6px);
+    letter-spacing:0.5px;transition:all 0.2s;z-index:1;">
+    📲 Installer l'application
+  </button>
+
+  <svg class="home-wave" viewBox="0 0 1440 80" preserveAspectRatio="none">
+    <path fill="white" d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z"/>
+  </svg>
+</div>
+
+<!-- ═══ MODAL : Instructions installation iOS ═══ -->
+<div id="modal-ios-install" class="modal-overlay">
+  <div class="modal" style="text-align:center;max-width:360px;">
+    <div style="font-size:2rem;margin-bottom:6px;">📲</div>
+    <div class="modal-title">Installer l'application</div>
+    <p style="color:var(--gray-mid);font-size:0.88rem;margin-bottom:20px;">
+      Suis ces 3 étapes dans <strong>Safari</strong> pour installer Couleur Marine sur ton appareil.
+    </p>
+    <div id="ios-install-steps" style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;text-align:left;">
+      <div style="display:flex;align-items:center;gap:14px;background:var(--bg);border-radius:14px;padding:12px 16px;">
+        <div style="font-size:1.8rem;flex-shrink:0;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#28AAB3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-weight:800;font-size:0.9rem;color:var(--navy);">Appuie sur Partager</div>
+          <div style="font-size:0.8rem;color:var(--gray-mid);">Icône <strong>↑</strong> en bas de Safari</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;background:var(--bg);border-radius:14px;padding:12px 16px;">
+        <div style="font-size:1.8rem;flex-shrink:0;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#28AAB3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-weight:800;font-size:0.9rem;color:var(--navy);">Sur l'écran d'accueil</div>
+          <div style="font-size:0.8rem;color:var(--gray-mid);">Fais défiler le menu vers le bas</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;background:var(--bg);border-radius:14px;padding:12px 16px;">
+        <div style="font-size:1.8rem;flex-shrink:0;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#28AAB3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-weight:800;font-size:0.9rem;color:var(--navy);">Appuie sur Ajouter</div>
+          <div style="font-size:0.8rem;color:var(--gray-mid);">En haut à droite du panneau</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="document.getElementById('modal-ios-install').classList.remove('active')">
+      Compris !
+    </button>
+  </div>
+</div>
+
+<!-- ═══ LIBRARY ═══ -->
+<div id="screen-library" class="screen">
+  <div class="nav-bar">
+    <button class="nav-back" id="lib-back-btn" onclick="Library.goBack()">🏠</button>
+    <h1 id="lib-title">Bibliothèque</h1>
+    <div class="nav-score">⭐ <span id="lib-score">0</span></div>
+  </div>
+  <div class="lib-header" id="lib-header-bar">
+    <span class="lib-breadcrumb" id="lib-breadcrumb">📚 Toutes les catégories</span>
+    <div style="flex:1"></div>
+    <button class="btn btn-sm btn-primary" id="lib-import-btn" onclick="Importer.openFolderDialog()">📂 Importer dossier</button>
+    <button class="btn btn-sm btn-gold" id="lib-add-btn" onclick="Library.addAction()">+ Ajouter</button>
+  </div>
+  <div class="content" id="lib-content"></div>
+  <button class="fab" onclick="Library.addAction()">+</button>
+</div>
+
+<!-- ═══ CARD EDITOR ═══ -->
+<div id="screen-card-editor" class="screen">
+  <div class="nav-bar">
+    <button class="nav-back" onclick="Editor.cancel()">←</button>
+    <h1 id="editor-title">Nouvelle carte</h1>
+  </div>
+  <div class="content">
+    <div class="editor-image-area" id="editor-img-area" onclick="document.getElementById('input-image').click()">
+      <img id="editor-preview-img" src="" alt="" style="display:none">
+      <div class="editor-img-placeholder" id="editor-img-placeholder">
+        <span class="icon">🖼️</span>
+        <span>Appuyer pour choisir une image</span>
+      </div>
+    </div>
+    <br>
+    <div class="form-group">
+      <label class="form-label">Catégorie</label>
+      <select class="form-select" id="editor-category"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mot à mémoriser</label>
+      <input type="text" class="form-input" id="editor-word" placeholder="Ex: pomme" autocapitalize="none">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Son / Prononciation</label>
+      <div class="audio-controls">
+        <button class="record-btn" id="record-btn" onclick="Editor.toggleRecord()">
+          <span class="rec-dot"></span><span id="record-label">🎤 Enregistrer</span>
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="Editor.ttsGenerate()">🗣️ TTS</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('input-audio').click()">📁 Fichier</button>
+        <div class="audio-preview" id="audio-preview">
+          <span>🎵</span>
+          <button class="btn btn-sm btn-primary" onclick="Editor.playAudio()">▶ Écouter</button>
+          <button class="btn btn-sm btn-danger" onclick="Editor.clearAudio()">✕</button>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary btn-lg" style="flex:1" onclick="Editor.save()">💾 Enregistrer</button>
+      <button class="btn btn-secondary" onclick="Editor.cancel()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SETUP ═══ -->
+<div id="screen-setup" class="screen">
+  <div class="nav-bar">
+    <button class="nav-back" onclick="showScreen('home')">←</button>
+    <h1 id="setup-player-title">Choisir une activité</h1>
+  </div>
+  <div class="content">
+    <div class="setup-card">
+      <h3>🎯 Mode d'association</h3>
+      <div class="mode-grid" id="setup-modes">
+        <button class="mode-btn selected" data-mode="img-word" onclick="Setup.selectMode(this)">🖼️ → 🔤<br><small>Image → Mot</small></button>
+        <button class="mode-btn" data-mode="word-img" onclick="Setup.selectMode(this)">🔤 → 🖼️<br><small>Mot → Image</small></button>
+        <button class="mode-btn" data-mode="sound-word" onclick="Setup.selectMode(this)">🔊 → 🔤<br><small>Son → Mot</small></button>
+        <button class="mode-btn" data-mode="sound-img" onclick="Setup.selectMode(this)">🔊 → 🖼️<br><small>Son → Image</small></button>
+      </div>
+    </div>
+    <div class="setup-card">
+      <h3>🧠 Nombre de choix</h3>
+      <div class="chips" id="setup-choices">
+        <button class="chip" data-val="2" onclick="Setup.selectChip(this,'choices')">2 choix</button>
+        <button class="chip selected" data-val="3" onclick="Setup.selectChip(this,'choices')">3 choix</button>
+        <button class="chip" data-val="4" onclick="Setup.selectChip(this,'choices')">4 choix</button>
+      </div>
+    </div>
+    <div class="setup-card">
+      <h3>🏆 Objectif de la session</h3>
+      <div style="margin-bottom:12px;">
+        <div class="form-label" style="font-size:0.85rem;margin-bottom:6px;">Nombre de cartes</div>
+        <div class="chips" id="setup-cards">
+          <button class="chip" data-val="5" onclick="Setup.selectChip(this,'cards')">5 cartes</button>
+          <button class="chip selected" data-val="10" onclick="Setup.selectChip(this,'cards')">10 cartes</button>
+          <button class="chip" data-val="20" onclick="Setup.selectChip(this,'cards')">20 cartes</button>
+          <button class="chip" data-val="0" onclick="Setup.selectChip(this,'cards')">Toutes</button>
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div class="form-label" style="font-size:0.85rem;margin-bottom:6px;">⏱ Limite de temps</div>
+        <div class="chips" id="setup-time">
+          <button class="chip selected" data-val="0" onclick="Setup.selectChip(this,'time')">Sans limite</button>
+          <button class="chip" data-val="120" onclick="Setup.selectChip(this,'time')">2 min</button>
+          <button class="chip" data-val="300" onclick="Setup.selectChip(this,'time')">5 min</button>
+          <button class="chip" data-val="600" onclick="Setup.selectChip(this,'time')">10 min</button>
+        </div>
+      </div>
+      <div>
+        <div class="form-label" style="font-size:0.85rem;margin-bottom:6px;">🎯 Objectif de points</div>
+        <div class="chips" id="setup-target">
+          <button class="chip selected" data-val="0" onclick="Setup.selectTargetChip(this,0)">Sans objectif</button>
+          <button class="chip" data-val="30" onclick="Setup.selectTargetChip(this,30)">30 pts</button>
+          <button class="chip" data-val="50" onclick="Setup.selectTargetChip(this,50)">50 pts</button>
+          <button class="chip" data-val="100" onclick="Setup.selectTargetChip(this,100)">100 pts</button>
+          <button class="chip" data-val="custom" onclick="Setup.selectTargetChip(this,'custom')">Autre…</button>
+        </div>
+        <div id="target-score-wrap" style="display:none;margin-top:10px;display:none;align-items:center;gap:10px;">
+          <input type="number" id="target-score-input" class="form-input" min="1" max="9999"
+            placeholder="Ex: 75" style="width:120px;" oninput="Setup.setCustomTarget(this.value)">
+          <span style="font-weight:700;color:var(--gray-mid);font-size:0.9rem;">points à atteindre</span>
+        </div>
+      </div>
+    </div>
+    <div class="setup-card">
+      <h3>📂 Catégories à jouer</h3>
+      <div style="margin-bottom:10px;">
+        <button class="chip selected" id="btn-all-cats" onclick="Setup.toggleAllCats()">Toutes</button>
+      </div>
+      <div class="category-select-list" id="setup-cat-list"></div>
+    </div>
+    <div id="setup-warning" class="warning-box" style="display:none"></div>
+    <br>
+    <button class="btn btn-primary btn-lg btn-block" onclick="Setup.start()">🚀 Commencer !</button>
+    <br>
+  </div>
+</div>
+
+<!-- ═══ GAME ═══ -->
+<div id="screen-game" class="screen">
+  <div class="game-header">
+    <button class="nav-back" style="color:var(--teal-light);margin-right:4px;" onclick="Game.confirmQuit()">✕</button>
+    <div class="game-progress-bar"><div class="game-progress-fill" id="game-progress" style="width:0%"></div></div>
+    <span class="game-player-name" id="game-player-name"></span>
+    <div class="game-score-badge">⭐ <span id="game-score">0</span><span id="game-score-target" style="display:none;opacity:0.7;font-weight:600;"> / <span id="game-target-val"></span></span></div>
+    <div class="game-timer" id="game-timer" style="display:none">5:00</div>
+  </div>
+  <div class="game-content" id="game-content">
+    <div class="game-streak" id="game-streak"></div>
+    <div class="game-instruction" id="game-instruction"></div>
+    <div class="stimulus-wrap">
+      <div class="stimulus-card" id="stimulus-card"></div>
+    </div>
+    <div class="choices-wrap">
+      <div class="choices-grid c3" id="choices-grid"></div>
+      <button id="game-speaker-btn" onclick="Game.playStimulus()"
+        style="display:none;margin-top:10px;background:none;border:none;cursor:pointer;
+          padding:4px 8px;align-items:center;gap:6px;font-family:'Nunito',sans-serif;
+          font-size:0.82rem;font-weight:700;color:var(--gray-mid);opacity:0.8;">
+        🔊 <span>Réécouter</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RESULTS ═══ -->
+<div id="screen-results" class="screen">
+  <div class="results-player" id="results-player"></div>
+  <div class="results-emoji" id="results-emoji">🏆</div>
+  <div class="results-title" id="results-title">Bravo !</div>
+  <div class="results-score" id="results-score">0</div>
+  <div class="results-stars" id="results-stars">⭐⭐⭐</div>
+  <div class="level-badge" id="results-level">Capitaine !</div>
+  <div class="results-card">
+    <div class="results-stat"><span class="results-stat-label">Bonnes réponses</span><span class="results-stat-value" id="r-correct">-</span></div>
+    <div class="results-stat"><span class="results-stat-label">Meilleure série</span><span class="results-stat-value" id="r-streak">-</span></div>
+    <div class="results-stat"><span class="results-stat-label">Temps</span><span class="results-stat-value" id="r-time">-</span></div>
+    <div class="results-stat"><span class="results-stat-label">Score total cumulé</span><span class="results-stat-value" id="r-total">-</span></div>
+  </div>
+  <div class="results-buttons">
+    <button class="btn btn-gold btn-lg btn-block" onclick="Game.replay()">🔄 Rejouer</button>
+    <button class="btn btn-primary btn-lg btn-block" onclick="Leaderboard.show()">🏆 Classement</button>
+    <button class="btn btn-outline btn-lg btn-block" style="color:white;border-color:white;" onclick="showScreen('setup')">⚙️ Changer l'activité</button>
+    <button class="btn btn-secondary btn-lg btn-block" onclick="showScreen('home')">🏠 Accueil</button>
+  </div>
+</div>
+
+<!-- ═══ LEADERBOARD ═══ -->
+<div id="screen-leaderboard" class="screen">
+  <div class="nav-bar">
+    <button class="nav-back" onclick="showScreen('home')">←</button>
+    <h1>🏆 Classement</h1>
+  </div>
+  <div class="content" id="leaderboard-content"></div>
+</div>
+
+<!-- ═══ SETTINGS ═══ -->
+<div id="screen-settings" class="screen">
+  <div class="nav-bar">
+    <button class="nav-back" onclick="showScreen('home')">←</button>
+    <h1>Réglages</h1>
+  </div>
+  <div class="content">
+    <div class="settings-section">
+      <h3>🔊 Son</h3>
+      <div class="setting-row">
+        <div class="setting-info"><div class="setting-label">Volume général</div></div>
+        <input type="range" id="vol-master" min="0" max="100" value="80" oninput="Settings.setVolume('master',this.value)">
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-label">Synthèse vocale (TTS)</div>
+          <div class="setting-desc">Lire le mot en français</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="toggle-tts" checked onchange="Settings.toggle('tts',this.checked)"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info"><div class="setting-label">Vitesse de lecture TTS</div></div>
+        <input type="range" id="vol-rate" min="50" max="120" value="85" oninput="Settings.setVolume('rate',this.value)">
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-label">Sons de feedback</div>
+          <div class="setting-desc">Bonne/mauvaise réponse</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="toggle-sfx" checked onchange="Settings.toggle('sfx',this.checked)"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+      </div>
+    </div>
+    <div class="settings-section">
+      <h3>🎮 Jeu</h3>
+      <div class="setting-row">
+        <div class="setting-info"><div class="setting-label">Animations de célébration</div></div>
+        <label class="toggle"><input type="checkbox" id="toggle-anim" checked onchange="Settings.toggle('anim',this.checked)"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-label">Jouer le son automatiquement</div>
+          <div class="setting-desc">Au début de chaque carte</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="toggle-autoplay" checked onchange="Settings.toggle('autoplay',this.checked)"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-label">Pénalité sur erreur (pts)</div>
+          <div class="setting-desc">Points retirés à chaque mauvaise réponse</div>
+        </div>
+        <select class="form-select" id="sel-penalty" style="width:auto;padding:6px 10px;" onchange="Settings.toggle('penalty',parseInt(this.value))">
+          <option value="0">0</option>
+          <option value="3">3</option>
+          <option value="5" selected>5</option>
+          <option value="10">10</option>
+        </select>
+      </div>
+    </div>
+    <div class="settings-section">
+      <h3>🗑️ Données</h3>
+      <div class="setting-row">
+        <div class="setting-info"><div class="setting-label">Réinitialiser les scores</div></div>
+        <button class="btn btn-danger btn-sm" onclick="Settings.resetScores()">Réinitialiser</button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-label">Supprimer toutes les données</div>
+          <div class="setting-desc">Cartes, catégories, joueurs et scores</div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="Settings.resetAll()">Tout effacer</button>
+      </div>
+    </div>
+    <div class="settings-section" style="text-align:center;color:var(--gray-mid);">
+      <div style="font-family:'Pirata One',cursive;font-size:1.2rem;color:var(--teal);margin-bottom:4px;">⚓ Couleur Marine</div>
+      <div style="font-size:0.8rem;">Application de flash cards · Primaire</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL : Joueur ═══ -->
+<div id="modal-player" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-title">Qui joue ? 🧑‍✈️</div>
+    <div class="form-group">
+      <label class="form-label">Choisir ou entrer ton prénom</label>
+      <select class="form-select" id="player-select" onchange="PlayerModal.onSelectChange()">
+        <option value="__new__">+ Nouveau joueur…</option>
+      </select>
+    </div>
+    <div class="form-group" id="player-new-group">
+      <label class="form-label">Ton prénom</label>
+      <input type="text" class="form-input" id="player-name-input" placeholder="Ex: Marie"
+        onkeydown="if(event.key==='Enter')PlayerModal.confirm()">
+    </div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" onclick="PlayerModal.close()">Annuler</button>
+      <button class="btn btn-gold btn-lg" onclick="PlayerModal.confirm()">C'est parti ! 🚀</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL : Catégorie ═══ -->
+<div id="modal-category" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-title" id="cat-modal-title">Nouvelle catégorie</div>
+    <div class="form-group">
+      <label class="form-label">Nom de la catégorie</label>
+      <input type="text" class="form-input" id="cat-name-input" placeholder="Ex: Animaux" onkeydown="if(event.key==='Enter')CatModal.save()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Couleur</label>
+      <div class="chips" id="cat-color-chips">
+        <button class="chip selected" data-color="#28AAB3" onclick="CatModal.selectColor(this)" style="background:#28AAB3;color:white;border-color:#28AAB3;">●</button>
+        <button class="chip" data-color="#E64448" onclick="CatModal.selectColor(this)" style="background:#E64448;color:white;border-color:#E64448;">●</button>
+        <button class="chip" data-color="#EAB244" onclick="CatModal.selectColor(this)" style="background:#EAB244;color:white;border-color:#EAB244;">●</button>
+        <button class="chip" data-color="#0B3549" onclick="CatModal.selectColor(this)" style="background:#0B3549;color:white;border-color:#0B3549;">●</button>
+        <button class="chip" data-color="#7FC5C7" onclick="CatModal.selectColor(this)" style="background:#7FC5C7;color:white;border-color:#7FC5C7;">●</button>
+        <button class="chip" data-color="#27ae60" onclick="CatModal.selectColor(this)" style="background:#27ae60;color:white;border-color:#27ae60;">●</button>
+        <button class="chip" data-color="#8e44ad" onclick="CatModal.selectColor(this)" style="background:#8e44ad;color:white;border-color:#8e44ad;">●</button>
+      </div>
+    </div>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" onclick="CatModal.close()">Annuler</button>
+      <button class="btn btn-primary" onclick="CatModal.save()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL : Confirm ═══ -->
+<div id="modal-confirm" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-title" id="confirm-title">Confirmer</div>
+    <p id="confirm-msg" style="color:var(--gray-mid);line-height:1.6;"></p>
+    <div class="modal-buttons">
+      <button class="btn btn-secondary" onclick="Confirm.cancel()">Annuler</button>
+      <button class="btn btn-danger" id="confirm-ok-btn" onclick="Confirm.ok()">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL : Verrou parental ═══ -->
+<div id="modal-parental" class="modal-overlay">
+  <div class="modal" style="text-align:center;">
+    <div style="font-size:2.4rem;margin-bottom:6px;">🔒</div>
+    <div class="modal-title">Zone adultes</div>
+    <p style="color:var(--gray-mid);font-size:0.9rem;margin-bottom:20px;">Résous cette multiplication pour accéder aux réglages.</p>
+    <div id="parental-question" style="font-size:2rem;font-weight:900;color:var(--navy-deep);
+      background:var(--bg);border-radius:14px;padding:14px 20px;margin-bottom:18px;letter-spacing:2px;"></div>
+    <input type="number" id="parental-input" class="form-input" placeholder="?"
+      style="text-align:center;font-size:1.5rem;font-weight:800;width:120px;margin:0 auto 8px;"
+      onkeydown="if(event.key==='Enter')ParentalLock.check()"
+      oninput="document.getElementById('parental-error').style.display='none'">
+    <div id="parental-error" style="display:none;color:var(--coral);font-weight:700;font-size:0.9rem;margin-bottom:8px;">
+      ❌ Ce n'est pas le bon résultat !
+    </div>
+    <div class="modal-buttons" style="margin-top:12px;">
+      <button class="btn btn-secondary" onclick="ParentalLock.close()">Annuler</button>
+      <button class="btn btn-primary" onclick="ParentalLock.check()">✔ Valider</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ MODAL : Import ═══ -->
+<div id="modal-import" class="modal-overlay">
+  <div class="modal" style="text-align:center;">
+    <div style="font-size:2.5rem;margin-bottom:12px;">📦</div>
+    <div class="modal-title">Import en cours…</div>
+    <p id="import-progress-text" style="color:var(--gray-mid);margin-bottom:16px;">Lecture des fichiers…</p>
+    <div style="background:var(--gray-light);border-radius:6px;overflow:hidden;height:10px;">
+      <div id="import-progress-bar" style="height:100%;background:var(--teal);width:0%;transition:width 0.2s;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- INPUTS -->
+<input type="file" id="input-image" accept="image/*" style="display:none" onchange="Editor.imageSelected(this)">
+<input type="file" id="input-audio" accept="audio/*" style="display:none" onchange="Editor.audioFileSelected(this)">
+<input type="file" id="input-folder" webkitdirectory multiple style="display:none" onchange="Importer.folderSelected(this)">
+<input type="file" id="input-add-images" accept="image/*" multiple style="display:none" onchange="Importer.imagesSelected(this)">
+
+<!-- OVERLAYS -->
+<div class="toast-container" id="toast-container"></div>
+<div class="celebration" id="celebration"></div>
+<div class="feedback-overlay" id="feedback-overlay"><div class="feedback-badge" id="feedback-badge"></div></div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  DATABASE  (IndexedDB v2)
+// ══════════════════════════════════════════════════
+const DB = (() => {
+  let _db = null;
+  const NAME = 'couleur-marine', VER = 2;
+
+  async function open() {
+    if (_db) return _db;
+    return new Promise((res, rej) => {
+      const req = indexedDB.open(NAME, VER);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        const old = e.oldVersion;
+        if (old < 1) {
+          const cs = db.createObjectStore('categories', {keyPath:'id'});
+          cs.createIndex('name','name');
+          const cr = db.createObjectStore('cards', {keyPath:'id'});
+          cr.createIndex('categoryId','categoryId');
+          db.createObjectStore('settings', {keyPath:'key'});
+        }
+        if (old < 2) {
+          if (!db.objectStoreNames.contains('players')) {
+            const ps = db.createObjectStore('players', {keyPath:'id'});
+            ps.createIndex('lastPlayed','lastPlayed');
+            ps.createIndex('totalScore','totalScore');
+          }
+        }
+      };
+      req.onsuccess = e => { _db = e.target.result; res(_db); };
+      req.onerror = e => rej(e.target.error);
+    });
+  }
+
+  function tx(store, mode='readonly') { return _db.transaction(store,mode).objectStore(store); }
+  function p(r) { return new Promise((res,rej)=>{ r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+
+  async function getAll(store) { await open(); return p(tx(store).getAll()); }
+  async function get(store, key) { await open(); return p(tx(store).get(key)); }
+  // Charge les cartes SANS imageData — 100x plus rapide sur mobile
+  async function getAllLight(store) {
+    await open();
+    return new Promise((res, rej) => {
+      const req = tx(store).openCursor();
+      const results = [];
+      req.onsuccess = e => {
+        const cursor = e.target.result;
+        if (cursor) {
+          const {imageData, ...rest} = cursor.value;
+          results.push(rest);
+          cursor.continue();
+        } else { res(results); }
+      };
+      req.onerror = () => rej(req.error);
+    });
+  }
+  async function put(store, obj) { await open(); return p(tx(store,'readwrite').put(obj)); }
+  async function del(store, key) { await open(); return p(tx(store,'readwrite').delete(key)); }
+  async function getByIndex(store, idx, val) { await open(); return p(tx(store).index(idx).getAll(val)); }
+  async function getSetting(key, fallback) { const v = await get('settings',key); return v ? v.value : fallback; }
+  async function setSetting(key, value) { return put('settings',{key,value}); }
+  async function clearStore(store) { await open(); return p(tx(store,'readwrite').clear()); }
+
+  return {open, getAll, getAllLight, get, put, del, getByIndex, getSetting, setSetting, clearStore};
+})();
+
+// ══════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════
+const State = {
+  totalScore: 0,
+  currentPlayer: null,
+  settings: { master:80, tts:true, rate:85, sfx:true, anim:true, autoplay:true, penalty:5 }
+};
+
+// ══════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════
+function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function shuffle(arr) {
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  window.scrollTo(0,0);
+}
+function toast(msg,color='') {
+  const c=document.getElementById('toast-container');
+  const t=document.createElement('div'); t.className='toast';
+  if(color) t.style.background=color; t.textContent=msg; c.appendChild(t);
+  setTimeout(()=>t.remove(),2800);
+}
+function formatTime(sec) { const m=Math.floor(sec/60),s=sec%60; return m+':'+(s<10?'0':'')+s; }
+function fileToDataURL(file) {
+  return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsDataURL(file);});
+}
+function capitalize(str) { if(!str)return''; return str.charAt(0).toUpperCase()+str.slice(1).toLowerCase(); }
+function nameFromFilename(f) { return capitalize(f.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ').trim()); }
+function categoryColors() { return ['#28AAB3','#E64448','#EAB244','#0B3549','#7FC5C7','#27ae60','#8e44ad']; }
+
+// ══════════════════════════════════════════════════
+//  AUDIO ENGINE
+// ══════════════════════════════════════════════════
+const AudioEngine = (() => {
+  let ctx=null;
+  function getCtx() { if(!ctx) ctx=new(window.AudioContext||window.webkitAudioContext)(); return ctx; }
+
+  async function playDataUrl(dataUrl) {
+    if(!dataUrl) return;
+    const a=getCtx(); if(a.state==='suspended') await a.resume();
+    const audio=new Audio(dataUrl); audio.volume=State.settings.master/100;
+    return audio.play().catch(()=>{});
+  }
+
+  function tone(freq,dur,type='sine',vol=0.3) {
+    try {
+      const a=getCtx(); if(a.state==='suspended') a.resume();
+      const o=a.createOscillator(),g=a.createGain();
+      o.connect(g); g.connect(a.destination);
+      o.frequency.value=freq; o.type=type;
+      g.gain.setValueAtTime(vol*State.settings.master/100,a.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+dur);
+      o.start(); o.stop(a.currentTime+dur);
+    } catch(e){}
+  }
+
+  function playCorrect() {
+    if(!State.settings.sfx) return;
+    tone(523,0.1); setTimeout(()=>tone(659,0.1),100); setTimeout(()=>tone(784,0.2),200);
+  }
+  function playWrong() {
+    if(!State.settings.sfx) return;
+    tone(200,0.15,'sawtooth',0.2); setTimeout(()=>tone(160,0.25,'sawtooth',0.15),150);
+  }
+  return {playDataUrl, playCorrect, playWrong};
+})();
+
+// ══════════════════════════════════════════════════
+//  TTS
+// ══════════════════════════════════════════════════
+const TTS = (() => {
+  let frVoice=null;
+  function loadVoice() { frVoice=speechSynthesis.getVoices().find(v=>v.lang.startsWith('fr'))||null; }
+  if(speechSynthesis.onvoiceschanged!==undefined) speechSynthesis.onvoiceschanged=loadVoice;
+  setTimeout(loadVoice,500);
+  function speak(text) {
+    if(!State.settings.tts||!text) return;
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='fr-FR'; u.rate=State.settings.rate/100; u.volume=State.settings.master/100;
+    if(frVoice) u.voice=frVoice;
+    speechSynthesis.speak(u);
+  }
+  return {speak};
+})();
+
+// ══════════════════════════════════════════════════
+//  PLAYERS
+// ══════════════════════════════════════════════════
+const Players = (() => {
+  async function getAll() { return DB.getAll('players'); }
+
+  async function getOrCreate(name) {
+    const all = await getAll();
+    let p = all.find(x=>x.name.toLowerCase()===name.toLowerCase());
+    if(!p) {
+      p={id:uid(),name:name.trim(),totalScore:0,gamesPlayed:0,lastPlayed:Date.now()};
+      await DB.put('players',p);
+    }
+    return p;
+  }
+
+  async function updateAfterGame(playerId, sessionScore) {
+    const p = await DB.get('players', playerId);
+    if(!p) return;
+    p.totalScore += sessionScore;
+    p.gamesPlayed++;
+    p.lastPlayed = Date.now();
+    await DB.put('players', p);
+    State.currentPlayer = p;
+    updateHomeScore();
+  }
+
+  async function getSortedByScore() {
+    const all = await getAll();
+    return all.sort((a,b)=>b.totalScore-a.totalScore);
+  }
+
+  async function getSortedByRecent() {
+    const all = await getAll();
+    return all.sort((a,b)=>{
+      if(b.lastPlayed!==a.lastPlayed) return b.lastPlayed-a.lastPlayed;
+      return b.gamesPlayed-a.gamesPlayed;
+    });
+  }
+
+  return {getAll, getOrCreate, updateAfterGame, getSortedByScore, getSortedByRecent};
+})();
+
+// ══════════════════════════════════════════════════
+//  PLAYER MODAL
+// ══════════════════════════════════════════════════
+const PlayerModal = (() => {
+  async function show() {
+    const players = await Players.getSortedByRecent();
+    const sel = document.getElementById('player-select');
+    sel.innerHTML = `<option value="__new__">+ Nouveau joueur…</option>` +
+      players.map(p=>`<option value="${p.id}">${p.name}  (${p.totalScore} pts · ${p.gamesPlayed} parties)</option>`).join('');
+
+    const newGrp = document.getElementById('player-new-group');
+    if(players.length>0) {
+      sel.value = players[0].id;
+      newGrp.style.display='none';
+    } else {
+      sel.value='__new__';
+      newGrp.style.display='';
+      setTimeout(()=>document.getElementById('player-name-input').focus(),100);
+    }
+    document.getElementById('player-name-input').value='';
+    document.getElementById('modal-player').classList.add('active');
+  }
+
+  function onSelectChange() {
+    const val=document.getElementById('player-select').value;
+    const grp=document.getElementById('player-new-group');
+    grp.style.display=val==='__new__'?'':'none';
+    if(val==='__new__') setTimeout(()=>document.getElementById('player-name-input').focus(),50);
+  }
+
+  async function confirm() {
+    const sel=document.getElementById('player-select');
+    let player;
+    if(sel.value==='__new__') {
+      const name=document.getElementById('player-name-input').value.trim();
+      if(!name){toast('⚠️ Entre ton prénom !');return;}
+      player=await Players.getOrCreate(name);
+    } else {
+      player=await DB.get('players',sel.value);
+    }
+    if(!player){toast('⚠️ Joueur introuvable');return;}
+    State.currentPlayer=player;
+    close();
+    showScreen('setup');
+    document.getElementById('setup-player-title').textContent=`Bonjour ${player.name} ! 👋`;
+  }
+
+  function close() { document.getElementById('modal-player').classList.remove('active'); }
+  return {show, onSelectChange, confirm, close};
+})();
+
+// ══════════════════════════════════════════════════
+//  LEADERBOARD
+// ══════════════════════════════════════════════════
+const Leaderboard = {
+  async show() {
+    const players = await Players.getSortedByScore();
+    const content = document.getElementById('leaderboard-content');
+    const medals = ['🥇','🥈','🥉'];
+
+    if(!players.length) {
+      content.innerHTML='<div class="empty-state"><div class="icon">🏆</div><p>Aucun score enregistré.<br>Joue une partie pour apparaître ici !</p></div>';
+    } else {
+      content.innerHTML = players.map((p,i)=>{
+        const isMe = State.currentPlayer && p.id===State.currentPlayer.id;
+        const avg = p.gamesPlayed ? Math.round(p.totalScore/p.gamesPlayed) : 0;
+        return `<div class="podium-row${isMe?' me':''}">
+          <div class="podium-rank">${medals[i]||(i+1)+'.'}</div>
+          <div style="flex:1">
+            <div class="podium-name">${p.name}${isMe?' 👈':''}</div>
+            <div class="podium-sub">${p.gamesPlayed} partie${p.gamesPlayed>1?'s':''} · moy. ${avg} pts</div>
+          </div>
+          <div class="podium-score">${p.totalScore} pts</div>
+        </div>`;
+      }).join('');
+    }
+    showScreen('leaderboard');
+  }
+};
+
+// ══════════════════════════════════════════════════
+//  CONFIRM DIALOG
+// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
+//  PARENTAL LOCK
+// ══════════════════════════════════════════════════
+const ParentalLock = (() => {
+  let _answer = 0;
+
+  function open() {
+    const a = Math.floor(Math.random() * 9) + 1;
+    const b = Math.floor(Math.random() * 9) + 1;
+    _answer = a * b;
+    document.getElementById('parental-question').textContent = `${a}  ×  ${b}  =  ?`;
+    document.getElementById('parental-input').value = '';
+    document.getElementById('parental-error').style.display = 'none';
+    document.getElementById('modal-parental').classList.add('active');
+    setTimeout(() => document.getElementById('parental-input').focus(), 120);
+  }
+
+  function check() {
+    const val = parseInt(document.getElementById('parental-input').value);
+    if (val === _answer) {
+      close();
+      showScreen('settings');
+    } else {
+      document.getElementById('parental-error').style.display = '';
+      document.getElementById('parental-input').value = '';
+      document.getElementById('parental-input').focus();
+      // Shake animation
+      const modal = document.querySelector('#modal-parental .modal');
+      modal.style.animation = 'none';
+      modal.offsetHeight; // reflow
+      modal.style.animation = 'w-shake 0.4s ease';
+    }
+  }
+
+  function close() {
+    document.getElementById('modal-parental').classList.remove('active');
+  }
+
+  return {open, check, close};
+})();
+
+const Confirm = (() => {
+  let _res=null;
+  function ask(title,msg,okLabel='Supprimer') {
+    document.getElementById('confirm-title').textContent=title;
+    document.getElementById('confirm-msg').textContent=msg;
+    document.getElementById('confirm-ok-btn').textContent=okLabel;
+    document.getElementById('modal-confirm').classList.add('active');
+    return new Promise(r=>{_res=r;});
+  }
+  function ok(){close();_res&&_res(true);}
+  function cancel(){close();_res&&_res(false);}
+  function close(){document.getElementById('modal-confirm').classList.remove('active');}
+  return {ask,ok,cancel};
+})();
+
+// ══════════════════════════════════════════════════
+//  CATEGORY MODAL
+// ══════════════════════════════════════════════════
+const CatModal = (() => {
+  let editId=null, color='#28AAB3';
+  function open(cat=null) {
+    editId=cat?cat.id:null; color=cat?cat.color:'#28AAB3';
+    document.getElementById('cat-modal-title').textContent=cat?'Modifier la catégorie':'Nouvelle catégorie';
+    document.getElementById('cat-name-input').value=cat?cat.name:'';
+    document.querySelectorAll('#cat-color-chips .chip').forEach(c=>c.classList.toggle('selected',c.dataset.color===color));
+    document.getElementById('modal-category').classList.add('active');
+    setTimeout(()=>document.getElementById('cat-name-input').focus(),100);
+  }
+  function close(){document.getElementById('modal-category').classList.remove('active');}
+  function selectColor(btn){
+    document.querySelectorAll('#cat-color-chips .chip').forEach(c=>c.classList.remove('selected'));
+    btn.classList.add('selected'); color=btn.dataset.color;
+  }
+  async function save() {
+    const name=document.getElementById('cat-name-input').value.trim();
+    if(!name){toast('⚠️ Donne un nom !');return;}
+    await DB.put('categories',{id:editId||uid(),name,color,createdAt:Date.now()});
+    close(); Library.show(); toast('✅ Catégorie enregistrée !');
+  }
+  return {open,close,selectColor,save};
+})();
+
+// ══════════════════════════════════════════════════
+//  IMPORTER
+// ══════════════════════════════════════════════════
+const Importer = (() => {
+  const EXTS=['jpg','jpeg','png','gif','webp','bmp','svg'];
+  function openFolderDialog(){document.getElementById('input-folder').value='';document.getElementById('input-folder').click();}
+
+  async function folderSelected(input) {
+    const files=Array.from(input.files); if(!files.length) return;
+    const groups={};
+    files.forEach(f=>{
+      const parts=f.webkitRelativePath.split('/');
+      if(parts.length<2) return;
+      const folder=parts[parts.length-2],fname=parts[parts.length-1];
+      const ext=fname.split('.').pop().toLowerCase();
+      if(!EXTS.includes(ext)) return;
+      if(!groups[folder]) groups[folder]=[];
+      groups[folder].push({file:f,fname});
+    });
+    const folders=Object.keys(groups);
+    if(!folders.length){toast('⚠️ Aucune image trouvée !');return;}
+
+    const modal=document.getElementById('modal-import');
+    const ptext=document.getElementById('import-progress-text');
+    const pbar=document.getElementById('import-progress-bar');
+    modal.classList.add('active');
+    const total=Object.values(groups).reduce((a,b)=>a+b.length,0);
+    let done=0;
+
+    try {
+      for(const folder of folders) {
+        ptext.textContent=`Catégorie : ${folder}…`;
+        const cats=await DB.getAll('categories');
+        let cat=cats.find(c=>c.name.toLowerCase()===folder.toLowerCase());
+        if(!cat) {
+          const colors=categoryColors();
+          cat={id:uid(),name:folder,color:colors[cats.length%colors.length],createdAt:Date.now()};
+          await DB.put('categories',cat);
+        }
+        for(const {file,fname} of groups[folder]) {
+          const word=nameFromFilename(fname);
+          const imageData=await fileToDataURL(file);
+          await DB.put('cards',{id:uid(),categoryId:cat.id,word,imageData,audioData:null,createdAt:Date.now()});
+          done++;
+          pbar.style.width=Math.round(done/total*100)+'%';
+          ptext.textContent=`${word} (${done}/${total})`;
+        }
+      }
+      modal.classList.remove('active');
+      toast(`✅ ${done} cartes importées dans ${folders.length} catégorie(s) !`,'#27ae60');
+      Library.show();
+    } catch(e) {
+      modal.classList.remove('active'); toast('❌ Erreur import'); console.error(e);
+    }
+  }
+
+  async function imagesSelected(input) {
+    const files=Array.from(input.files); if(!files.length) return;
+    const catId=input.dataset.categoryId; if(!catId) return;
+    for(const file of files) {
+      const word=nameFromFilename(file.name);
+      const imageData=await fileToDataURL(file);
+      await DB.put('cards',{id:uid(),categoryId:catId,word,imageData,audioData:null,createdAt:Date.now()});
+    }
+    toast(`✅ ${files.length} carte(s) ajoutée(s) !`,'#27ae60');
+    Library.renderCards(catId);
+  }
+
+  return {openFolderDialog, folderSelected, imagesSelected};
+})();
+
+// ══════════════════════════════════════════════════
+//  LIBRARY
+// ══════════════════════════════════════════════════
+const Library = (() => {
+  let curCat=null;
+
+  async function show() {
+    curCat=null;
+    showScreen('library');
+    document.getElementById('lib-title').textContent='Bibliothèque';
+    document.getElementById('lib-breadcrumb').textContent='📚 Toutes les catégories';
+    document.getElementById('lib-import-btn').style.display='';
+    document.getElementById('lib-add-btn').textContent='+ Catégorie';
+    document.getElementById('lib-back-btn').textContent='🏠';
+    await renderCategories();
+  }
+
+  async function renderCategories() {
+    const cats=await DB.getAll('categories');
+    const allCards=await DB.getAll('cards');
+    const content=document.getElementById('lib-content');
+    if(!cats.length) {
+      content.innerHTML=`<div class="empty-state"><div class="icon">📚</div><p>Commence par importer un dossier ou crée une catégorie.</p><div class="btn-row" style="justify-content:center;"><button class="btn btn-primary" onclick="Importer.openFolderDialog()">📂 Importer un dossier</button><button class="btn btn-gold" onclick="CatModal.open()">+ Catégorie</button></div></div>`;
+      return;
+    }
+    content.innerHTML=`
+      <div class="import-dropzone" onclick="Importer.openFolderDialog()" style="margin-bottom:20px;">
+        <div class="icon">📂</div>
+        <p><strong>Importer un dossier d'images</strong><br>Nom du dossier = catégorie · Nom de fichier = mot</p>
+      </div>
+      <div class="section-title">Catégories (${cats.length})</div>
+      <div class="category-grid">
+        ${cats.map(c=>{
+          const count=allCards.filter(x=>x.categoryId===c.id).length;
+          const withAudio=allCards.filter(x=>x.categoryId===c.id&&x.audioData).length;
+          return `<div class="category-card" onclick="Library.renderCards('${c.id}')" ontouchstart="this.classList.add('touch-hover')" ontouchend="this.classList.remove('touch-hover')">
+            <div class="cat-color-bar" style="background:${c.color}"></div>
+            <div class="cat-name">${c.name}</div>
+            <div class="cat-count">${count} carte${count>1?'s':''} · 🔊 ${withAudio}/${count}</div>
+            <div class="cat-actions">
+              <button class="cat-action-btn" onclick="event.stopPropagation();CatModal.open({id:'${c.id}',name:'${c.name.replace(/'/g,"\\'")}',color:'${c.color}'})">✏️</button>
+              <button class="cat-action-btn" onclick="event.stopPropagation();deleteCat('${c.id}')">🗑️</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  async function renderCards(catId) {
+    curCat=catId;
+    const cat=await DB.get('categories',catId); if(!cat) return;
+    const cards=await DB.getByIndex('cards','categoryId',catId);
+    const content=document.getElementById('lib-content');
+    document.getElementById('lib-title').textContent=cat.name;
+    document.getElementById('lib-breadcrumb').innerHTML=`<span onclick="Library.show()" style="cursor:pointer;text-decoration:underline;">📚 Bibliothèque</span> › ${cat.name}`;
+    document.getElementById('lib-import-btn').style.display='none';
+    document.getElementById('lib-add-btn').textContent='+ Carte';
+    document.getElementById('lib-back-btn').textContent='←';
+
+    if(!cards.length) {
+      content.innerHTML=`<div class="empty-state"><div class="icon">🃏</div><p>Aucune carte dans cette catégorie.</p><div class="btn-row" style="justify-content:center;"><button class="btn btn-primary" onclick="addImagesFromLib('${catId}')">📸 Importer des images</button><button class="btn btn-gold" onclick="Editor.open(null,'${catId}')">+ Carte</button></div></div>`;
+      return;
+    }
+    const withAudio=cards.filter(c=>c.audioData).length;
+    content.innerHTML=`
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+        <span style="font-size:0.85rem;color:var(--gray-mid);font-weight:600;">${cards.length} carte${cards.length>1?'s':''} · 🔊 ${withAudio}/${cards.length}</span>
+        <div style="flex:1"></div>
+        <button class="btn btn-sm btn-outline" onclick="addImagesFromLib('${catId}')">📸 + Images</button>
+        <button class="btn btn-sm btn-primary" onclick="generateAllTTS('${catId}')">🗣️ TTS tout</button>
+      </div>
+      <div class="card-grid">
+        ${cards.map(card=>`
+          <div class="flash-card" ontouchstart="this.classList.add('touch-hover')" ontouchend="this.classList.remove('touch-hover')">
+            <div class="flash-card-img-wrap">
+              ${card.imageData?`<img src="${card.imageData}" alt="${card.word}" loading="lazy">`:'<div class="no-img">🖼️</div>'}
+            </div>
+            <div class="flash-card-body">
+              <span class="flash-card-word">${card.word}</span>
+              <button class="audio-icon-btn ${card.audioData?'has-audio':'no-audio'}" onclick="playCardAudio('${card.id}')">
+                ${card.audioData?'🔊':'🔇'}
+              </button>
+            </div>
+            <div class="flash-card-actions">
+              <button class="card-action-btn" onclick="Editor.open('${card.id}','${catId}')">✏️</button>
+              <button class="card-action-btn del" onclick="deleteCard('${card.id}','${catId}')">🗑️</button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  function goBack() { if(curCat) show(); else showScreen('home'); }
+  function addAction() { if(curCat) Editor.open(null,curCat); else CatModal.open(); }
+  return {show, renderCategories, renderCards, goBack, addAction};
+})();
+
+async function renderCards(catId){Library.renderCards(catId);}
+async function addImagesFromLib(catId){const i=document.getElementById('input-add-images');i.dataset.categoryId=catId;i.value='';i.click();}
+async function playCardAudio(cardId){const c=await DB.get('cards',cardId);if(!c)return;if(c.audioData)AudioEngine.playDataUrl(c.audioData);else{TTS.speak(c.word);toast('🗣️ Synthèse vocale');}}
+async function deleteCat(catId){const ok=await Confirm.ask('Supprimer la catégorie ?','Toutes les cartes seront supprimées.');if(!ok)return;const cs=await DB.getByIndex('cards','categoryId',catId);for(const c of cs)await DB.del('cards',c.id);await DB.del('categories',catId);Library.show();toast('🗑️ Supprimé');}
+async function deleteCard(cardId,catId){const ok=await Confirm.ask('Supprimer cette carte ?','Action irréversible.');if(!ok)return;await DB.del('cards',cardId);Library.renderCards(catId);toast('🗑️ Carte supprimée');}
+async function generateAllTTS(catId){const cards=await DB.getByIndex('cards','categoryId',catId);const no=cards.filter(c=>!c.audioData);if(!no.length){toast('✅ Toutes les cartes ont déjà un son !');return;}toast(`🗣️ TTS prêt pour ${no.length} carte(s)`);}
+
+// ══════════════════════════════════════════════════
+//  CARD EDITOR
+// ══════════════════════════════════════════════════
+const Editor = (() => {
+  let cardId=null,catId=null,imageData=null,audioData=null;
+  let mediaRecorder=null,chunks=[],isRecording=false;
+
+  async function open(cid,categoryId) {
+    cardId=cid; catId=categoryId; imageData=null; audioData=null;
+    const cats=await DB.getAll('categories');
+    const sel=document.getElementById('editor-category');
+    sel.innerHTML=cats.map(c=>`<option value="${c.id}" ${c.id===catId?'selected':''}>${c.name}</option>`).join('');
+    document.getElementById('editor-word').value='';
+    resetImage(); resetAudio();
+    if(cid){
+      const card=await DB.get('cards',cid);
+      if(card){
+        document.getElementById('editor-word').value=card.word;
+        if(card.imageData){imageData=card.imageData;showImage(imageData);}
+        if(card.audioData){audioData=card.audioData;showAudioPreview();}
+        sel.value=card.categoryId;
+      }
+    }
+    document.getElementById('editor-title').textContent=cid?'Modifier la carte':'Nouvelle carte';
+    showScreen('card-editor');
+  }
+
+  function resetImage(){document.getElementById('editor-preview-img').style.display='none';document.getElementById('editor-preview-img').src='';document.getElementById('editor-img-placeholder').style.display='';}
+  function showImage(src){const img=document.getElementById('editor-preview-img');img.src=src;img.style.display='block';document.getElementById('editor-img-placeholder').style.display='none';}
+  function resetAudio(){document.getElementById('audio-preview').classList.remove('visible');stopRecording();}
+  function showAudioPreview(){document.getElementById('audio-preview').classList.add('visible');}
+
+  function imageSelected(input){
+    const file=input.files[0]; if(!file) return;
+    fileToDataURL(file).then(d=>{imageData=d;showImage(d);});
+    const w=document.getElementById('editor-word'); if(!w.value) w.value=nameFromFilename(file.name);
+  }
+  function audioFileSelected(input){const file=input.files[0];if(!file)return;fileToDataURL(file).then(d=>{audioData=d;showAudioPreview();});}
+
+  async function toggleRecord(){
+    if(isRecording){stopRecording();return;}
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      chunks=[]; mediaRecorder=new MediaRecorder(stream);
+      mediaRecorder.ondataavailable=e=>chunks.push(e.data);
+      mediaRecorder.onstop=()=>{
+        const blob=new Blob(chunks,{type:'audio/webm'});
+        const r=new FileReader(); r.onload=e=>{audioData=e.target.result;showAudioPreview();}; r.readAsDataURL(blob);
+        stream.getTracks().forEach(t=>t.stop());
+      };
+      mediaRecorder.start(); isRecording=true;
+      document.getElementById('record-btn').classList.add('recording');
+      document.getElementById('record-label').textContent='⏹ Arrêter';
+    }catch(e){toast('⚠️ Accès au micro refusé');}
+  }
+  function stopRecording(){
+    if(mediaRecorder&&mediaRecorder.state!=='inactive') mediaRecorder.stop();
+    isRecording=false;
+    document.getElementById('record-btn').classList.remove('recording');
+    document.getElementById('record-label').textContent='🎤 Enregistrer';
+  }
+  function ttsGenerate(){
+    const word=document.getElementById('editor-word').value.trim();
+    if(!word){toast('⚠️ Entre d\'abord un mot');return;}
+    TTS.speak(word); toast('🗣️ TTS : "'+word+'"');
+    audioData='__tts__'; showAudioPreview();
+  }
+  function playAudio(){if(!audioData)return;if(audioData==='__tts__')TTS.speak(document.getElementById('editor-word').value);else AudioEngine.playDataUrl(audioData);}
+  function clearAudio(){audioData=null;document.getElementById('audio-preview').classList.remove('visible');}
+
+  async function save(){
+    const word=document.getElementById('editor-word').value.trim();
+    if(!word){toast('⚠️ Le mot est obligatoire !');return;}
+    const selCat=document.getElementById('editor-category').value;
+    if(!selCat){toast('⚠️ Choisis une catégorie !');return;}
+    const stored=(audioData&&audioData!=='__tts__')?audioData:null;
+    const useTTS=audioData==='__tts__';
+    await DB.put('cards',{id:cardId||uid(),categoryId:selCat,word,imageData:imageData||null,audioData:stored,useTTS,createdAt:Date.now()});
+    toast('✅ Carte enregistrée !'); Library.renderCards(selCat); showScreen('library');
+  }
+
+  function cancel(){stopRecording();if(catId)Library.renderCards(catId);else Library.show();showScreen('library');}
+  return {open,imageSelected,audioFileSelected,toggleRecord,ttsGenerate,playAudio,clearAudio,save,cancel};
+})();
+
+// ══════════════════════════════════════════════════
+//  SETUP
+// ══════════════════════════════════════════════════
+const Setup = (() => {
+  let config={mode:'img-word',choices:3,cards:10,time:0,targetScore:0,catIds:[]};
+
+  async function init() {
+    const cats=await DB.getAll('categories');
+    const allCards=await DB.getAllLight('cards');
+    const list=document.getElementById('setup-cat-list');
+    if(!cats.length){list.innerHTML='<div style="color:var(--gray-mid);font-size:0.9rem;padding:10px 0;">Aucune catégorie. Crée des cartes d\'abord.</div>';return;}
+    config.catIds=cats.map(c=>c.id);
+    list.innerHTML=cats.map(c=>{
+      const count=allCards.filter(x=>x.categoryId===c.id).length;
+      return `<div class="cat-select-item selected" data-id="${c.id}" onclick="Setup.toggleCat(this)">
+        <div class="cat-select-check" style="background:${c.color};border-color:${c.color};color:white;">✓</div>
+        <div><div class="cat-select-name">${c.name}</div><div class="cat-select-count">${count} carte${count>1?'s':''}</div></div>
+      </div>`;
+    }).join('');
+    validate();
+  }
+
+  function toggleCat(el){
+    el.classList.toggle('selected');
+    const id=el.dataset.id;
+    if(el.classList.contains('selected')){if(!config.catIds.includes(id))config.catIds.push(id);el.querySelector('.cat-select-check').textContent='✓';}
+    else{config.catIds=config.catIds.filter(x=>x!==id);el.querySelector('.cat-select-check').textContent='';}
+    updateAllBtn(); validate();
+  }
+  function toggleAllCats(){
+    const items=document.querySelectorAll('#setup-cat-list .cat-select-item');
+    const any=document.querySelectorAll('#setup-cat-list .cat-select-item.selected').length>0;
+    items.forEach(i=>{if(any){i.classList.remove('selected');i.querySelector('.cat-select-check').textContent='';}else{i.classList.add('selected');i.querySelector('.cat-select-check').textContent='✓';}});
+    config.catIds=any?[]:Array.from(items).map(i=>i.dataset.id);
+    updateAllBtn(); validate();
+  }
+  function updateAllBtn(){
+    const total=document.querySelectorAll('#setup-cat-list .cat-select-item').length;
+    const sel=document.querySelectorAll('#setup-cat-list .cat-select-item.selected').length;
+    const btn=document.getElementById('btn-all-cats');
+    btn.classList.toggle('selected',sel===total);
+    btn.textContent=sel===total?'Toutes ✓':'Toutes';
+  }
+  function selectMode(btn){document.querySelectorAll('#setup-modes .mode-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');config.mode=btn.dataset.mode;validate();}
+  function selectChip(btn,group){document.querySelectorAll(`#setup-${group} .chip`).forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');config[group]=parseInt(btn.dataset.val);validate();}
+
+  function selectTargetChip(btn, val) {
+    document.querySelectorAll('#setup-target .chip').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    const wrap = document.getElementById('target-score-wrap');
+    if(val === 'custom') {
+      wrap.style.display = 'flex';
+      const inp = document.getElementById('target-score-input');
+      inp.value = '';
+      config.targetScore = 0;
+      setTimeout(()=>inp.focus(), 50);
+    } else {
+      wrap.style.display = 'none';
+      config.targetScore = parseInt(val) || 0;
+    }
+  }
+
+  function setCustomTarget(val) {
+    const n = parseInt(val);
+    config.targetScore = (n > 0) ? n : 0;
+  }
+
+  async function validate(){
+    const allCards=await DB.getAllLight('cards');
+    const eligible=allCards.filter(c=>config.catIds.includes(c.categoryId));
+    const warn=document.getElementById('setup-warning');
+    if(!eligible.length){warn.style.display='';warn.textContent='⚠️ Aucune carte sélectionnée.';return false;}
+    if(eligible.length<config.choices){warn.style.display='';warn.textContent=`⚠️ Seulement ${eligible.length} carte(s). Nombre de choix ajusté.`;return true;}
+    warn.style.display='none'; return true;
+  }
+
+  async function start(){
+    const ok=await validate(); if(!ok){toast('⚠️ Corrige les problèmes');return;}
+    const allCards=await DB.getAllLight('cards'); // sans images — chargement rapide
+    const eligible=allCards.filter(c=>config.catIds.includes(c.categoryId));
+    if(!eligible.length){toast('⚠️ Aucune carte !');return;}
+    Game.start({...config,pool:eligible});
+  }
+
+  return {init,toggleCat,toggleAllCats,selectMode,selectChip,selectTargetChip,setCustomTarget,validate,start};
+})();
+
+// ══════════════════════════════════════════════════
+//  GAME ENGINE
+// ══════════════════════════════════════════════════
+const Game = (() => {
+  let cfg={},queue=[],current=0,score=0,streak=0,bestStreak=0,correct=0;
+  let startTime=0,timerInterval=null,timeLeft=0,transitioning=false,lastConfig=null;
+
+  const INSTRUCTIONS={
+    'img-word':'Quel est le mot pour cette image ?',
+    'word-img':'Trouve l\'image qui correspond à ce mot.',
+    'sound-word':'Écoute et trouve le bon mot.',
+    'sound-img':'Écoute et trouve la bonne image.'
+  };
+
+  function start(config){
+    cfg=config; lastConfig=config;
+    let pool=shuffle([...config.pool]);
+    queue=config.cards>0?pool.slice(0,Math.min(config.cards,pool.length)):pool;
+    current=0;score=0;streak=0;bestStreak=0;correct=0;transitioning=false;
+    startTime=Date.now();
+    document.getElementById('game-player-name').textContent=State.currentPlayer?State.currentPlayer.name:'';
+    // Show/hide score target indicator
+    const targetEl = document.getElementById('game-score-target');
+    if(cfg.targetScore > 0) {
+      targetEl.style.display = '';
+      document.getElementById('game-target-val').textContent = cfg.targetScore;
+    } else {
+      targetEl.style.display = 'none';
+    }
+    showScreen('game');
+    setupTimer();
+    renderQuestion();
+  }
+
+  function setupTimer(){
+    clearInterval(timerInterval);
+    const el=document.getElementById('game-timer');
+    if(cfg.time>0){
+      timeLeft=cfg.time; el.style.display=''; el.textContent=formatTime(timeLeft);
+      timerInterval=setInterval(()=>{
+        timeLeft--; el.textContent=formatTime(timeLeft);
+        el.classList.toggle('warning',timeLeft<=30);
+        if(timeLeft<=0){clearInterval(timerInterval);end();}
+      },1000);
+    } else el.style.display='none';
+  }
+
+  // Cache d'images pour la session de jeu (évite de re-fetcher la même image)
+  const _imgCache = {};
+  async function _loadImage(card) {
+    if (card.imageData) return card.imageData;
+    if (_imgCache[card.id]) return _imgCache[card.id];
+    const full = await DB.get('cards', card.id);
+    if (full && full.imageData) {
+      _imgCache[card.id] = full.imageData;
+      card.imageData = full.imageData; // mise en cache dans le pool
+    }
+    return card.imageData || '';
+  }
+
+  async function renderQuestion(){
+    if(current>=queue.length){end();return;}
+    transitioning=false;
+    const card=queue[current],total=queue.length;
+    const nChoices=Math.min(cfg.choices,cfg.pool.length);
+    const pct = cfg.targetScore > 0
+      ? Math.min(100, Math.round(score / cfg.targetScore * 100))
+      : Math.round(current / total * 100);
+    document.getElementById('game-progress').style.width = pct + '%';
+    document.getElementById('game-score').textContent=score;
+    document.getElementById('game-instruction').textContent=INSTRUCTIONS[cfg.mode];
+    const others=shuffle(cfg.pool.filter(c=>c.id!==card.id));
+    const choices=shuffle([card,...others.slice(0,nChoices-1)]);
+    await renderStimulus(card);
+    await renderChoices(choices,card,nChoices);
+    renderStreak();
+    if(State.settings.autoplay&&cfg.mode.startsWith('sound'))
+      setTimeout(()=>playCardSound(card),400);
+  }
+
+  async function renderStimulus(card){
+    const el=document.getElementById('stimulus-card'),mode=cfg.mode;
+    const spk=document.getElementById('game-speaker-btn');
+    if(mode==='img-word'){
+      el.innerHTML=`<img class="stimulus-img" src="" alt="${card.word}">`;
+      if(spk) spk.style.display='flex';
+      const img = el.querySelector('img');
+      img.src = await _loadImage(card);
+    } else if(mode==='word-img'){
+      el.innerHTML=`<div class="stimulus-word">${card.word}</div>`;
+      if(spk) spk.style.display='flex';
+    } else {
+      el.innerHTML=`<div class="stimulus-sound">🔊</div>
+        <button class="stimulus-speaker-btn" onclick="Game.playStimulus()">▶</button>`;
+      if(spk) spk.style.display='none';
+    }
+  }
+
+  async function renderChoices(choices,correctCard,nChoices){
+    const grid=document.getElementById('choices-grid'),mode=cfg.mode;
+    grid.className=`choices-grid c${nChoices}`;
+    grid.innerHTML=choices.map(c=>{
+      if(mode==='img-word'||mode==='sound-word'){
+        const spkBtn = mode==='sound-word'
+          ? `<span class="choice-sound-btn" onclick="event.stopPropagation();Game.playChoice('${c.id}')">🔈</span>`
+          : '';
+        return `<button class="choice-btn" data-id="${c.id}" onclick="Game.answer('${c.id}','${correctCard.id}')">
+          <span class="choice-word">${c.word}</span>${spkBtn}
+        </button>`;
+      } else {
+        // word-img and sound-img: show image, word only in sound-img
+        return `<button class="choice-btn" data-id="${c.id}" onclick="Game.answer('${c.id}','${correctCard.id}')">
+          <img class="choice-img" src="" data-card-id="${c.id}" alt="" loading="lazy">
+          ${mode==='sound-img'?`<span class="choice-word">${c.word}</span>`:''}
+        </button>`;
+      }
+    }).join('');
+    const gc=document.getElementById('game-content');
+    gc.className='game-content'+(mode.startsWith('sound')?' sound-mode':'');
+
+    // Charger les images des choix en parallèle (lazy)
+    if(mode==='word-img'||mode==='sound-img'){
+      choices.forEach(async c => {
+        const src = await _loadImage(c);
+        const img = grid.querySelector(`img[data-card-id="${c.id}"]`);
+        if(img) img.src = src;
+      });
+    }
+  }
+
+  function renderStreak(){
+    const el=document.getElementById('game-streak');
+    if(streak<2){el.innerHTML='';return;}
+    el.innerHTML=`<span class="streak-label">Série ×${streak}</span>${'🔥'.repeat(Math.min(streak,10)).split('').map(s=>`<span class="streak-star">${s}</span>`).join('')}`;
+  }
+
+  function currentCard(){return queue[current];}
+
+  function playStimulus(){if(currentCard())playCardSound(currentCard());}
+  function playChoice(cardId){const c=cfg.pool.find(x=>x.id===cardId);if(c)playCardSound(c);}
+
+  async function playCardSound(card){
+    const btn=document.getElementById('game-speaker-btn')||document.querySelector('.stimulus-speaker-btn');
+    if(btn)btn.classList.add('playing');
+    if(card.audioData) await AudioEngine.playDataUrl(card.audioData);
+    else TTS.speak(card.word);
+    setTimeout(()=>{if(btn)btn.classList.remove('playing');},900);
+  }
+
+  function answer(chosenId,correctId){
+    if(transitioning) return;
+    // Check if this button is already disabled (already tried wrong)
+    const btn=document.querySelector(`.choice-btn[data-id="${chosenId}"]`);
+    if(!btn||btn.classList.contains('disabled')) return;
+
+    const isCorrect=chosenId===correctId;
+
+    if(isCorrect){
+      transitioning=true;
+      // Mark correct, disable all
+      document.querySelectorAll('.choice-btn').forEach(b=>{
+        b.classList.add('disabled');
+        if(b.dataset.id===correctId) b.classList.add('correct');
+      });
+      streak++; correct++;
+      if(streak>bestStreak) bestStreak=streak;
+      let pts=10;
+      if(streak>=5) pts=20;
+      else if(streak>=3) pts=15;
+      score+=pts;
+      document.getElementById('game-score').textContent=score;
+      AudioEngine.playCorrect();
+      showFeedback('✅');
+      if(streak>0&&streak%5===0&&State.settings.anim) celebrate();
+      renderStreak();
+
+      // ▶ Play word sound for img-word and word-img modes
+      const mode=cfg.mode;
+      const card=currentCard();
+      if(mode==='img-word'||mode==='word-img'){
+        setTimeout(()=>playCardSound(card),300);
+      }
+
+      // ▶ Check points target
+      if(cfg.targetScore > 0 && score >= cfg.targetScore) {
+        celebrate();
+        setTimeout(()=>{ current++; end(); }, mode==='img-word'||mode==='word-img' ? 1600 : 1000);
+        return;
+      }
+
+      setTimeout(()=>{ current++; renderQuestion(); }, mode==='img-word'||mode==='word-img' ? 1600 : 1000);
+
+    } else {
+      // Wrong: penalize, disable ONLY this button, let child retry
+      const penalty=State.settings.penalty;
+      if(penalty>0){
+        score=Math.max(0,score-penalty);
+        document.getElementById('game-score').textContent=score;
+        // Flash penalty
+        const info=document.getElementById('game-instruction');
+        const old=info.textContent;
+        info.innerHTML=`<span style="color:var(--coral);font-weight:800;">−${penalty} points… Réessaie !</span>`;
+        setTimeout(()=>{info.textContent=old;},1000);
+      }
+      streak=0;
+      btn.classList.add('wrong','disabled');
+      AudioEngine.playWrong();
+      showFeedback('❌');
+      renderStreak();
+      // Do NOT advance — child must find the correct answer
+    }
+  }
+
+  function showFeedback(emoji){
+    const o=document.getElementById('feedback-overlay'),b=document.getElementById('feedback-badge');
+    b.textContent=emoji; o.classList.add('show');
+    setTimeout(()=>o.classList.remove('show'),600);
+  }
+
+  async function end(){
+    clearInterval(timerInterval);
+    const elapsed=Math.round((Date.now()-startTime)/1000);
+    // Update player score
+    if(State.currentPlayer){
+      await Players.updateAfterGame(State.currentPlayer.id, score);
+    }
+    updateHomeScore();
+    showResults({score,correct,total:queue.length,streak:bestStreak,elapsed});
+  }
+
+  function showResults(data){
+    const pct=data.total?Math.round(data.correct/data.total*100):0;
+    const targetReached = cfg.targetScore > 0 && data.score >= cfg.targetScore;
+    let emoji,title,stars,level;
+    if(targetReached){emoji='🎯';title='Objectif atteint !';stars='⭐⭐⭐';level='Capitaine des mers !';}
+    else if(pct===100){emoji='🏆';title='Parfait !';stars='⭐⭐⭐';level='Capitaine des mers !';}
+    else if(pct>=80){emoji='🎉';title='Excellent !';stars='⭐⭐⭐';level='Officier !';}
+    else if(pct>=60){emoji='😊';title='Bien joué !';stars='⭐⭐';level='Matelot !';}
+    else if(pct>=40){emoji='💪';title='Continue !';stars='⭐';level='Mousse !';}
+    else{emoji='🌊';title='Essaie encore !';stars='';level='Apprenti !';}
+    const pName=State.currentPlayer?State.currentPlayer.name:'';
+    document.getElementById('results-player').textContent=pName?`👤 ${pName}`:'';
+    document.getElementById('results-emoji').textContent=emoji;
+    document.getElementById('results-title').textContent=title;
+    document.getElementById('results-score').textContent=data.score+' pts';
+    document.getElementById('results-stars').textContent=stars;
+    document.getElementById('results-level').textContent=level;
+    document.getElementById('r-correct').textContent=data.correct+'/'+data.total+' ('+pct+'%)';
+    document.getElementById('r-streak').textContent=data.streak>0?'🔥×'+data.streak:'–';
+    document.getElementById('r-time').textContent=formatTime(data.elapsed);
+    document.getElementById('r-total').textContent=(State.currentPlayer?State.currentPlayer.totalScore:State.totalScore)+' pts';
+    showScreen('results');
+    if(pct>=60&&State.settings.anim) celebrate();
+  }
+
+  async function confirmQuit(){
+    const ok=await Confirm.ask('Quitter la partie ?','Ta progression sera perdue.','Quitter');
+    if(ok){clearInterval(timerInterval);showScreen('home');}
+  }
+  function replay(){if(lastConfig)start(lastConfig);}
+  return {start,answer,playStimulus,playChoice,confirmQuit,replay};
+})();
+
+// ══════════════════════════════════════════════════
+//  CELEBRATE
+// ══════════════════════════════════════════════════
+function celebrate(){
+  const c=document.getElementById('celebration'); c.innerHTML='';
+  const colors=['#28AAB3','#E64448','#EAB244','#7FC5C7','#27ae60','#8e44ad','#fff'];
+  for(let i=0;i<60;i++){
+    const p=document.createElement('div'); p.className='confetti-piece';
+    p.style.cssText=`left:${Math.random()*100}vw;background:${colors[Math.floor(Math.random()*colors.length)]};width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*0.5}s;`;
+    c.appendChild(p);
+  }
+  setTimeout(()=>{c.innerHTML='';},3500);
+}
+
+// ══════════════════════════════════════════════════
+//  SETTINGS
+// ══════════════════════════════════════════════════
+const Settings = (() => {
+  function setVolume(type,val){if(type==='master')State.settings.master=parseInt(val);if(type==='rate')State.settings.rate=parseInt(val);DB.setSetting('settings',{...State.settings});}
+  function toggle(key,val){State.settings[key]=val;DB.setSetting('settings',{...State.settings});}
+  async function resetScores(){
+    const ok=await Confirm.ask('Réinitialiser tous les scores ?','Les scores de tous les joueurs seront remis à zéro.','Réinitialiser');
+    if(!ok) return;
+    const players=await DB.getAll('players');
+    for(const p of players){p.totalScore=0;p.gamesPlayed=0;await DB.put('players',p);}
+    State.totalScore=0; updateHomeScore(); toast('✅ Scores réinitialisés');
+  }
+  async function resetAll(){
+    const ok=await Confirm.ask('Supprimer TOUT ?','Cartes, catégories, joueurs et scores effacés !','Tout effacer');
+    if(!ok) return;
+    await DB.clearStore('cards');await DB.clearStore('categories');await DB.clearStore('players');
+    State.totalScore=0;State.currentPlayer=null;updateHomeScore();toast('✅ Données effacées');
+  }
+  return {setVolume,toggle,resetScores,resetAll};
+})();
+
+function updateHomeScore(){
+  const total=State.currentPlayer?State.currentPlayer.totalScore:State.totalScore;
+  document.getElementById('home-total-score').textContent=total;
+  document.getElementById('lib-score').textContent=total;
+}
+
+// DataIO supprimé — export/import JSON retiré de l'application
+if (false) { const DataIO = (() => {
+  function showExportModal() {
+    document.getElementById('export-choice').style.display = '';
+    document.getElementById('export-progress').style.display = 'none';
+    document.getElementById('modal-export').classList.add('active');
+  }
+  function closeExportModal() {
+    document.getElementById('modal-export').classList.remove('active');
+  }
+
+  function showProgress(text, pct, sub='') {
+    document.getElementById('export-choice').style.display = 'none';
+    document.getElementById('export-progress').style.display = '';
+    document.getElementById('export-progress-text').textContent = text;
+    document.getElementById('export-progress-bar').style.width = pct + '%';
+    document.getElementById('export-progress-sub').textContent = sub;
+  }
+
+  function triggerDownload(blobOrContent, filename) {
+    const blob = blobOrContent instanceof Blob
+      ? blobOrContent
+      : new Blob([blobOrContent], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.style.display = 'none';
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 3000);
+  }
+
+  // ── Export léger : catégories + mots + sons, PAS d'images ──
+  async function exportLight() {
+    showProgress('Lecture des données…', 10);
+    await new Promise(r => setTimeout(r, 50));
+    const categories = await DB.getAll('categories');
+    const cards = await DB.getAll('cards');
+    if (!categories.length && !cards.length) { closeExportModal(); toast('⚠️ Aucune donnée à exporter.'); return; }
+
+    showProgress('Construction du fichier…', 40);
+    await new Promise(r => setTimeout(r, 50));
+
+    // Exclude imageData — keep everything else (word, audioData, categoryId…)
+    const lightCards = cards.map(c => {
+      const {imageData, ...rest} = c;
+      return rest;
+    });
+
+    const payload = {
+      version: 1, lightExport: true,
+      exportedAt: new Date().toISOString(),
+      appName: 'Couleur Marine',
+      categories, cards: lightCards
+    };
+
+    showProgress('Téléchargement…', 90);
+    await new Promise(r => setTimeout(r, 50));
+
+    const date = new Date().toISOString().slice(0,10);
+    triggerDownload(JSON.stringify(payload), `couleur-marine-leger-${date}.json`);
+    closeExportModal();
+    toast(`✅ Export léger : ${categories.length} catégories · ${cards.length} cartes`, '#27ae60');
+  }
+
+  // ── Export complet avec images, traitement carte par carte ──
+  async function exportFull() {
+    const categories = await DB.getAll('categories');
+    const cards = await DB.getAll('cards');
+    if (!categories.length && !cards.length) { closeExportModal(); toast('⚠️ Aucune donnée à exporter.'); return; }
+
+    showProgress('Démarrage de l\'export complet…', 0, `0 / ${cards.length} cartes`);
+    await new Promise(r => setTimeout(r, 100));
+
+    // Use a parts[] array passed to Blob() — avoids O(n²) string concatenation
+    const date = new Date().toISOString();
+    const parts = [];
+    parts.push('{"version":1,"fullExport":true,"exportedAt":"' + date + '","appName":"Couleur Marine","categories":');
+    parts.push(JSON.stringify(categories));
+    parts.push(',"cards":[');
+
+    for (let i = 0; i < cards.length; i++) {
+      if (i > 0) parts.push(',');
+      parts.push(JSON.stringify(cards[i]));  // serialize one card at a time
+      cards[i] = null; // release reference so GC can reclaim memory
+
+      // Yield to browser after every card so UI stays responsive
+      const pct = Math.round((i + 1) / cards.length * 88);
+      showProgress('Export en cours…', pct, `${i+1} / ${cards.length} cartes traitées`);
+      await new Promise(r => setTimeout(r, 0));
+    }
+
+    parts.push(']}');
+
+    showProgress('Assemblage du fichier…', 92, 'Presque fini…');
+    await new Promise(r => setTimeout(r, 50));
+
+    // Blob assembles parts without copying into one giant string
+    const blob = new Blob(parts, {type: 'application/json'});
+
+    showProgress('Téléchargement…', 98, '');
+    await new Promise(r => setTimeout(r, 50));
+
+    const dateStr = date.slice(0,10);
+    triggerDownload(blob, `couleur-marine-complet-${dateStr}.json`);
+    closeExportModal();
+    toast(`✅ Export complet : ${categories.length} catégories · ${parts.filter(p=>p===',').length + 1} cartes`, '#27ae60');
+  }
+
+  async function _doImport(payload, onProgress) {
+    let catCount = 0, cardCount = 0;
+    const total = payload.categories.length + payload.cards.length;
+    let done = 0;
+    for (const cat of payload.categories) {
+      const ex = await DB.get('categories', cat.id);
+      if (!ex) { await DB.put('categories', cat); catCount++; }
+      done++;
+      if (onProgress) onProgress(Math.round(done / total * 95), `${done} / ${total} éléments`);
+    }
+    for (const card of payload.cards) {
+      const ex = await DB.get('cards', card.id);
+      if (!ex) { await DB.put('cards', card); cardCount++; }
+      done++;
+      if (done % 10 === 0 || done === total) {
+        if (onProgress) onProgress(Math.round(done / total * 95), `${done} / ${total} éléments`);
+        await new Promise(r => setTimeout(r, 0));
+      }
+    }
+    return {catCount, cardCount};
+  }
+
+  function _showImportProgress(text, pct, sub) {
+    const wrap = document.getElementById('import-progress-wrap');
+    if (!wrap) return;
+    wrap.style.display = '';
+    document.getElementById('import-progress-text').textContent = text;
+    document.getElementById('import-progress-bar').style.width = pct + '%';
+    document.getElementById('import-progress-pct').textContent = pct + '%';
+    document.getElementById('import-progress-sub').textContent = sub || '';
+  }
+  function _hideImportProgress() {
+    const wrap = document.getElementById('import-progress-wrap');
+    if (wrap) wrap.style.display = 'none';
+  }
+
+  async function _readFileAsJSON(file, onProgress) {
+    // Essaie d'abord Response.json() (natif, efficace en mémoire)
+    // Si ça échoue (vieux Safari / OOM), bascule sur FileReader
+    try {
+      if (typeof Response !== 'undefined') {
+        onProgress && onProgress('Décodage JSON…', 6);
+        return await new Response(file).json();
+      }
+    } catch(e1) { /* fallback */ }
+    // Fallback : FileReader classique
+    onProgress && onProgress('Lecture du fichier…', 4);
+    const text = await new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result);
+      fr.onerror = () => rej(fr.error);
+      fr.readAsText(file, 'utf-8');
+    });
+    onProgress && onProgress('Décodage JSON…', 10);
+    await new Promise(r => setTimeout(r, 0)); // yield avant parse bloquant
+    return JSON.parse(text);
+  }
+
+  async function importAll(input) {
+    const file = input.files[0]; if (!file) return;
+    try {
+      const sizeMb = Math.round(file.size / 1024 / 1024);
+      const isLargeOnMobile = sizeMb > 80 &&
+        /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+      // Avertissement si gros fichier sur mobile
+      if (isLargeOnMobile) {
+        const proceed = await Confirm.ask(
+          `Fichier volumineux (${sizeMb} Mo)`,
+          'Sur téléphone, un fichier avec images peut saturer la mémoire et planter. Préfère l\'export léger (sans images) pour les appareils mobiles. Continuer quand même ?',
+          'Continuer'
+        );
+        if (!proceed) { input.value=''; return; }
+      }
+
+      _showImportProgress('Lecture du fichier…', 2, `${sizeMb} Mo — patiente…`);
+      await new Promise(r => setTimeout(r, 80));
+
+      let payload;
+      try {
+        payload = await _readFileAsJSON(file, (msg, pct) => {
+          _showImportProgress(msg, pct, `${sizeMb} Mo`);
+        });
+      } catch(parseErr) {
+        _hideImportProgress();
+        toast('❌ Impossible de lire ce fichier : ' + (parseErr.message || parseErr));
+        console.error('Import parse error:', parseErr);
+        return;
+      }
+
+      if (!payload || !payload.categories || !payload.cards) {
+        _hideImportProgress();
+        toast('❌ Format non reconnu (categories ou cards manquants)'); return;
+      }
+
+      _showImportProgress('Données lues…', 14,
+        `${payload.categories.length} catégories · ${payload.cards.length} cartes`);
+      await new Promise(r => setTimeout(r, 60));
+
+      const isLight = payload.lightExport ? ' (sans images)' : '';
+      const ok = await Confirm.ask(
+        'Importer les données ?',
+        `${payload.categories.length} catégories · ${payload.cards.length} cartes${isLight}`,
+        'Importer'
+      );
+      if (!ok) { _hideImportProgress(); return; }
+
+      const {catCount, cardCount} = await _doImport(payload, (pct, sub) => {
+        _showImportProgress('Import en cours…', 14 + Math.round(pct * 0.84), sub);
+      });
+
+      _showImportProgress('✅ Terminé !', 100,
+        `${catCount} catégorie(s) · ${cardCount} carte(s) importées`);
+      await new Promise(r => setTimeout(r, 1400));
+      _hideImportProgress();
+      input.value = '';
+      toast(`✅ ${catCount} catégorie(s) · ${cardCount} carte(s) importées !`, '#27ae60');
+      Library.show();
+    } catch(e) {
+      _hideImportProgress();
+      toast('❌ Erreur : ' + (e.message || String(e)));
+      console.error('Import error:', e);
+    }
+  }
+
+  async function importFirstRun(input) {
+    const file = input.files[0]; if (!file) return;
+    const textEl  = document.getElementById('firstrun-text');
+    const barEl   = document.getElementById('firstrun-bar');
+    const subEl   = document.getElementById('firstrun-sub');
+    const progEl  = document.getElementById('firstrun-progress');
+    const btnArea = input.closest('div') || input.parentElement;
+
+    // Switch to progress view
+    progEl.style.display = '';
+    input.previousElementSibling && (input.previousElementSibling.style.display = 'none');
+    // hide buttons
+    document.querySelectorAll('#screen-firstrun button').forEach(b => b.style.display='none');
+
+    function onProgress(pct, sub) {
+      textEl.textContent = 'Chargement en cours…';
+      barEl.style.width = pct + '%';
+      subEl.textContent = sub;
+    }
+
+    try {
+      textEl.textContent = 'Lecture du fichier…';
+      barEl.style.width = '5%';
+      await new Promise(r => setTimeout(r, 80));
+
+      const text = await file.text();
+      textEl.textContent = 'Analyse des données…';
+      barEl.style.width = '10%';
+      await new Promise(r => setTimeout(r, 80));
+
+      const payload = JSON.parse(text);
+      if (!payload.categories || !payload.cards) {
+        textEl.textContent = '❌ Fichier invalide';
+        return;
+      }
+
+      const {catCount, cardCount} = await _doImport(payload, onProgress);
+
+      barEl.style.width = '100%';
+      textEl.textContent = `✅ ${cardCount} cartes chargées !`;
+      subEl.textContent = `${payload.categories.length} catégories importées`;
+      await new Promise(r => setTimeout(r, 1200));
+
+      input.value = '';
+      showScreen('home');
+      Library.show(); // pre-warm library cache
+      toast(`🎉 ${cardCount} cartes prêtes à jouer !`, '#27ae60');
+    } catch(e) {
+      textEl.textContent = '❌ Erreur lors du chargement';
+      subEl.textContent = e.message || '';
+      console.error(e);
+    }
+  }
+
+  return {showExportModal, closeExportModal, exportLight, exportFull, importAll, importFirstRun};
+}); }
+
+// ══════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
+//  PWA INSTALL BUTTON
+// ══════════════════════════════════════════════════
+const PWAInstall = (() => {
+  let _deferredPrompt = null;
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isAndroid = /Android/.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+
+  function showBtn() {
+    const btn = document.getElementById('btn-install-pwa');
+    if (!btn || isStandalone) return;
+    btn.style.display = '';
+    if (isIOS) {
+      btn.textContent = '📲 Installer sur iPhone / iPad';
+    } else if (isAndroid) {
+      btn.textContent = '📲 Installer sur Android';
+    } else {
+      btn.textContent = '📲 Installer l\'application';
+    }
+  }
+
+  function trigger() {
+    if (isIOS) {
+      document.getElementById('modal-ios-install').classList.add('active');
+      return;
+    }
+    if (_deferredPrompt) {
+      _deferredPrompt.prompt();
+      _deferredPrompt.userChoice.then(choice => {
+        if (choice.outcome === 'accepted') {
+          document.getElementById('btn-install-pwa').style.display = 'none';
+          toast('🎉 Application installée !', '#27ae60');
+        }
+        _deferredPrompt = null;
+      });
+    }
+  }
+
+  // Capture beforeinstallprompt (Chrome/Edge/Android)
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    _deferredPrompt = e;
+    showBtn();
+  });
+
+  // App installed → hide button
+  window.addEventListener('appinstalled', () => {
+    document.getElementById('btn-install-pwa').style.display = 'none';
+    toast('🎉 Application installée avec succès !', '#27ae60');
+  });
+
+  // iOS : show button if not already in standalone mode
+  if (isIOS && !isStandalone) {
+    window.addEventListener('load', showBtn);
+  }
+
+  return {trigger};
+})();
+
+// ══════════════════════════════════════════════════
+//  PWA SETUP
+// ══════════════════════════════════════════════════
+(function setupPWA() {
+  const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+    <rect width="512" height="512" rx="112" fill="#0B3549"/>
+    <rect x="0" y="365" width="512" height="147" fill="#1a5a6e"/>
+    <path d="M0 370 Q128 350 256 370 Q384 390 512 370 L512 382 Q384 402 256 382 Q128 362 0 382Z" fill="#28AAB3" opacity="0.75"/>
+    <rect x="242" y="144" width="28" height="228" rx="14" fill="#EAB244"/>
+    <circle cx="256" cy="130" r="34" fill="none" stroke="#EAB244" stroke-width="22"/>
+    <rect x="172" y="214" width="168" height="22" rx="11" fill="#EAB244"/>
+    <circle cx="178" cy="225" r="15" fill="#E64448"/>
+    <circle cx="334" cy="225" r="15" fill="#E64448"/>
+    <path d="M256 372 Q200 350 182 392 Q170 420 200 424 Q228 428 247 402 L256 390 L265 402 Q284 428 312 424 Q342 420 330 392 Q312 350 256 372Z" fill="#EAB244"/>
+  </svg>`;
+
+  function svgToPng(svgStr, size) {
+    return new Promise(resolve => {
+      const img = new Image();
+      const blob = new Blob([svgStr], {type:'image/svg+xml'});
+      const url = URL.createObjectURL(blob);
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = c.height = size;
+        c.getContext('2d').drawImage(img, 0, 0, size, size);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL('image/png'));
+      };
+      img.src = url;
+    });
+  }
+
+  async function injectPWA() {
+    const [png192, png512, pngApple] = await Promise.all([
+      svgToPng(ICON_SVG, 192),
+      svgToPng(ICON_SVG, 512),
+      svgToPng(ICON_SVG, 180)
+    ]);
+
+    // Apple touch icon
+    document.getElementById('apple-touch-icon').href = pngApple;
+
+    // Web App Manifest
+    const manifest = {
+      name: 'Couleur Marine',
+      short_name: 'C. Marine',
+      description: 'Flash cards nautiques pour enfants de primaire',
+      start_url: './',
+      display: 'standalone',
+      orientation: 'portrait-primary',
+      background_color: '#0B3549',
+      theme_color: '#0B3549',
+      lang: 'fr',
+      categories: ['education', 'kids'],
+      icons: [
+        {src: png192, sizes: '192x192', type: 'image/png', purpose: 'any maskable'},
+        {src: png512, sizes: '512x512', type: 'image/png', purpose: 'any maskable'}
+      ]
+    };
+    const mBlob = new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'});
+    document.getElementById('pwa-manifest').href = URL.createObjectURL(mBlob);
+
+    // Service Worker — enregistrement via sw.js dédié (obligatoire pour offline mobile)
+    if ('serviceWorker' in navigator) {
+      try {
+        await navigator.serviceWorker.register('./sw.js', {scope: './'});
+        console.info('SW: enregistré via sw.js');
+      } catch(e) {
+        console.warn('SW: échec enregistrement sw.js', e);
+      }
+    }
+  }
+
+  // Run after page loads (non-blocking)
+  window.addEventListener('load', () => injectPWA().catch(console.warn));
+})();
+
+async function init(){
+  await DB.open();
+  const saved=await DB.getSetting('settings',null);
+  if(saved) Object.assign(State.settings,saved);
+  State.totalScore=await DB.getSetting('totalScore',0);
+  updateHomeScore();
+
+  document.getElementById('vol-master').value=State.settings.master;
+  document.getElementById('vol-rate').value=State.settings.rate;
+  document.getElementById('toggle-tts').checked=State.settings.tts;
+  document.getElementById('toggle-sfx').checked=State.settings.sfx;
+  document.getElementById('toggle-anim').checked=State.settings.anim;
+  document.getElementById('toggle-autoplay').checked=State.settings.autoplay;
+  document.getElementById('sel-penalty').value=State.settings.penalty??5;
+
+  const orig=showScreen;
+  window.showScreen=function(name){orig(name);if(name==='setup')Setup.init();if(name==='home')updateHomeScore();};
+
+  // Decorative bubbles on home
+  const home=document.getElementById('screen-home');
+  for(let i=0;i<5;i++){
+    const b=document.createElement('div'); b.className='home-bubble';
+    const s=80+Math.random()*200;
+    b.style.cssText=`width:${s}px;height:${s}px;top:${Math.random()*60}%;left:${Math.random()*100}%;`;
+    home.appendChild(b);
+  }
+
+}
+init();
+</script>
+</body>
+</html>
